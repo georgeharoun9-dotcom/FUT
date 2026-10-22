@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>FUT</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FUT">
+<meta name="theme-color" content="#050508">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+html { -webkit-text-size-adjust: 100%; height: 100%; touch-action: pan-x pan-y; }
+body, button, a, label, input, select, textarea { touch-action: manipulation; }
+html, body, * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+img, svg { -webkit-user-drag: none; }
+[hidden] { display: none !important; }
+:root {
+  --base: #eef0f6;
+  --glass: rgba(255,255,255,.58); --glass-strong: rgba(255,255,255,.84); --glass-sheen: rgba(255,255,255,.55);
+  --glass-edge: rgba(255,255,255,.75); --glass-hi: rgba(255,255,255,.9);
+  --glass-shadow: 0 10px 30px rgba(30,40,80,.08), 0 1px 2px rgba(30,40,80,.06);
+  --fill: rgba(118,118,128,.12); --fill-2: rgba(118,118,128,.2);
+  --fg: #0b0b0f; --fg2: rgba(40,40,52,.64); --fg3: rgba(40,40,52,.36); --sep: rgba(60,60,67,.14);
+  --blue: #007aff; --green: #34c759; --red: #ff3b30; --orange: #ff9500; --purple: #af52de; --teal: #30b0c7; --yellow: #ffcc00;
+  --gold1: #f6e27a; --gold2: #c9a227; --goldfg: #3b2a00;
+  --blob1: rgba(52,199,120,.38); --blob2: rgba(64,140,255,.38); --blob3: rgba(255,190,60,.28);
+  --scrim: rgba(10,12,20,.28);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
+  --round: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --spring: cubic-bezier(.32,.72,0,1);
+}
+:root[data-theme="dark"] {
+  --base: #050508; --glass: rgba(44,44,52,.46); --glass-strong: rgba(30,30,36,.9); --glass-sheen: rgba(255,255,255,.08);
+  --glass-edge: rgba(255,255,255,.12); --glass-hi: rgba(255,255,255,.16); --glass-shadow: 0 10px 30px rgba(0,0,0,.35);
+  --fill: rgba(118,118,128,.24); --fill-2: rgba(118,118,128,.36); --fg: #fff; --fg2: rgba(235,235,245,.62); --fg3: rgba(235,235,245,.32); --sep: rgba(255,255,255,.1);
+  --blue: #0a84ff; --green: #30d158; --red: #ff453a; --orange: #ff9f0a; --purple: #bf5af2; --teal: #40c8e0; --yellow: #ffd60a;
+  --blob1: rgba(40,200,120,.26); --blob2: rgba(40,110,255,.3); --blob3: rgba(255,170,40,.16); --scrim: rgba(0,0,0,.5); color-scheme: dark;
+}
+html, body { background: var(--base); color: var(--fg); }
+body { margin: 0; min-height: 100%; overscroll-behavior-y: none; font-family: var(--font); font-size: 17px; line-height: 1.35; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.press { transition: transform 160ms cubic-bezier(.3,.7,.4,1.4), opacity 120ms ease-out; }
+.press:active { transform: scale(.96); }
+.num { font-variant-numeric: tabular-nums; }
+
+.ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ambient i { position: absolute; border-radius: 50%; filter: blur(70px); }
+.ambient i:nth-child(1) { width: 70vmax; height: 70vmax; left: -25vmax; top: -30vmax; background: var(--blob1); }
+.ambient i:nth-child(2) { width: 65vmax; height: 65vmax; right: -30vmax; top: 15vh; background: var(--blob2); }
+.ambient i:nth-child(3) { width: 60vmax; height: 60vmax; left: -10vmax; bottom: -35vmax; background: var(--blob3); }
+
+.glass, .card, .list, .tabbar, .sheet, .seg, .toast, .search, .fab {
+  background: linear-gradient(160deg, var(--glass-sheen), transparent 42%), var(--glass);
+  -webkit-backdrop-filter: blur(26px) saturate(185%); backdrop-filter: blur(26px) saturate(185%);
+  border: .5px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow);
+}
+@media (prefers-reduced-transparency: reduce) { .glass, .card, .list, .tabbar, .sheet, .seg, .toast, .search, .fab { background: var(--glass-strong); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* Layout */
+#app { max-width: 640px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 110px); }
+.page { display: none; animation: pagein 280ms var(--spring); }
+.page.on { display: block; }
+@keyframes pagein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 14px 2px 14px; }
+.top h1 { font: 700 34px/1.08 var(--font); letter-spacing: -.022em; margin: 0; }
+.top .sub { color: var(--fg2); font-size: 15px; margin-top: 2px; }
+.topbtns { display: flex; gap: 8px; }
+.ibtn { width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; color: var(--blue); }
+.ibtn svg { width: 22px; height: 22px; }
+h2.sec { font: 600 13px/1 var(--font); text-transform: uppercase; letter-spacing: .02em; color: var(--fg2); margin: 22px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+h2.sec button { color: var(--blue); text-transform: none; font-size: 15px; letter-spacing: 0; font-weight: 400; }
+.card { border-radius: 24px; padding: 16px; margin-bottom: 12px; }
+.card h3 { margin: 0 0 4px; font: 600 15px/1.2 var(--font); color: var(--fg2); display: flex; align-items: center; gap: 6px; }
+.big { font: 700 34px/1.05 var(--round); letter-spacing: -.02em; }
+.mid { font: 600 22px/1.1 var(--round); }
+.muted { color: var(--fg2); }
+.faint { color: var(--fg3); }
+.small { font-size: 13px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 > .card { margin: 0; }
+.mb { margin-bottom: 12px; }
+
+/* Lists */
+.list { border-radius: 22px; overflow: hidden; margin-bottom: 12px; }
+.li { display: flex; align-items: center; gap: 12px; padding: 11px 16px; min-height: 52px; position: relative; width: 100%; text-align: left; }
+.li + .li::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
+.li.ind + .li.ind::before { left: 64px; }
+button.li:active, .li.tap:active { background: var(--fill); }
+.li .main { flex: 1; min-width: 0; }
+.li .t { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li .s { font-size: 13px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li .r { color: var(--fg2); font-size: 15px; text-align: right; white-space: nowrap; }
+.chev { width: 8px; height: 13px; color: var(--fg3); flex: none; }
+.empty { text-align: center; padding: 28px 16px; color: var(--fg2); }
+.empty b { display: block; color: var(--fg); font-size: 17px; margin-bottom: 4px; }
+
+/* Rating badge */
+.ovr { width: 40px; height: 44px; flex: none; border-radius: 10px 10px 14px 14px; display: grid; place-items: center; font: 800 18px/1 var(--round); color: var(--goldfg);
+  background: linear-gradient(160deg, var(--gold1), var(--gold2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 6px rgba(150,110,0,.25); position: relative; }
+.ovr small { position: absolute; bottom: 3px; font-size: 8px; font-weight: 700; letter-spacing: .02em; opacity: .75; }
+.ovr.lo { --gold1: #e7e9ee; --gold2: #a9aeb8; --goldfg: #24262c; }
+.ovr.hi { --gold1: #9fe7ff; --gold2: #3a7bd5; --goldfg: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 8px rgba(40,100,220,.35); }
+.lock { width: 15px; height: 15px; color: var(--orange); flex: none; }
+
+/* Chips & segmented */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--fill); font-size: 15px; font-weight: 500; white-space: nowrap; }
+.chip.on { background: var(--fg); color: var(--base); }
+.chipwrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: flex; padding: 3px; border-radius: 14px; margin-bottom: 14px; position: relative; }
+.seg button { flex: 1; height: 34px; border-radius: 11px; font-size: 15px; font-weight: 500; color: var(--fg2); position: relative; z-index: 1; transition: color 200ms; }
+.seg button.on { color: var(--fg); background: var(--glass-strong); box-shadow: 0 2px 8px rgba(0,0,0,.08), inset 0 .5px 0 var(--glass-hi); }
+.search { display: flex; align-items: center; gap: 8px; height: 42px; border-radius: 21px; padding: 0 14px; margin-bottom: 10px; }
+.search svg { width: 17px; height: 17px; color: var(--fg2); flex: none; }
+.search input { flex: 1; border: 0; background: none; outline: none; font-size: 17px; min-width: 0; }
+
+/* Buttons */
+.btn { height: 50px; border-radius: 25px; padding: 0 20px; font-weight: 600; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--fill); }
+.btn.pri { background: var(--blue); color: #fff; box-shadow: 0 6px 16px rgba(0,122,255,.3), inset 0 1px 0 rgba(255,255,255,.3); }
+.btn.green { background: var(--green); color: #fff; }
+.btn.red { background: var(--red); color: #fff; }
+.btn.full { width: 100%; }
+.btn.sm { height: 36px; border-radius: 18px; padding: 0 14px; font-size: 15px; }
+.btn svg { width: 18px; height: 18px; }
+.btnrow { display: flex; gap: 10px; }
+.btnrow > * { flex: 1; }
+.link { color: var(--blue); }
+
+/* Fields */
+.field { display: flex; align-items: center; gap: 12px; padding: 0 16px; min-height: 50px; position: relative; }
+.field + .field::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
+.field label { flex: none; min-width: 96px; }
+.field input, .field select, .field textarea { flex: 1; min-width: 0; border: 0; background: none; outline: none; text-align: right; font-size: 17px; padding: 12px 0; }
+.field select { -webkit-appearance: none; appearance: none; color: var(--blue); direction: rtl; }
+.field textarea { text-align: left; resize: none; min-height: 80px; }
+.field.col { flex-direction: column; align-items: stretch; padding-top: 12px; padding-bottom: 12px; gap: 8px; }
+.field.col label { min-width: 0; }
+textarea.paste { width: 100%; min-height: 160px; border-radius: 16px; border: 0; background: var(--fill); padding: 12px; outline: none; resize: vertical; font-size: 14px; }
+.switch { width: 51px; height: 31px; border-radius: 16px; background: var(--fill-2); position: relative; flex: none; transition: background 220ms; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.15), 0 1px 1px rgba(0,0,0,.1); transition: transform 260ms var(--spring); }
+.switch.on { background: var(--green); }
+.switch.on::after { transform: translateX(20px); }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button { width: 40px; height: 36px; border-radius: 12px; background: var(--fill); font-size: 22px; font-weight: 500; display: grid; place-items: center; }
+.stepper b { min-width: 44px; text-align: center; font: 700 26px/1 var(--round); }
+
+/* Score input */
+.score { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 8px 0 4px; }
+.score .side { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.score .side span { font-size: 13px; color: var(--fg2); }
+.score .colon { font: 700 40px/1 var(--round); color: var(--fg3); }
+.score .val { font: 800 56px/1 var(--round); min-width: 60px; text-align: center; }
+.score .pm { display: flex; gap: 8px; }
+.score .pm button { width: 44px; height: 38px; border-radius: 12px; background: var(--fill); font-size: 22px; }
+
+/* Tab bar */
+.tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 12px); display: flex; gap: 2px; padding: 5px; border-radius: 32px; z-index: 30; max-width: calc(100% - 24px); }
+.tabbar button { width: 70px; height: 54px; border-radius: 27px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10.5px; font-weight: 600; color: var(--fg2); transition: color 200ms, background 260ms var(--spring); }
+.tabbar button svg { width: 24px; height: 24px; }
+.tabbar button.on { color: var(--blue); background: var(--fill); }
+@media (max-width: 380px) { .tabbar button { width: 62px; } }
+
+/* Sheets */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; opacity: 0; transition: opacity 300ms; }
+.scrim.on { opacity: 1; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 640px; z-index: 41; border-radius: 28px 28px 0 0; max-height: calc(100% - env(safe-area-inset-top) - 12px); display: flex; flex-direction: column;
+  background: var(--glass-strong); transform: translateY(105%); transition: transform 440ms var(--spring); will-change: transform; }
+.sheet.on { transform: translateY(0); }
+.sheet .grab { height: 22px; flex: none; display: grid; place-items: center; touch-action: none; cursor: grab; }
+.sheet .grab::before { content: ""; width: 38px; height: 5px; border-radius: 3px; background: var(--fill-2); }
+.sheet .sh { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 8px; flex: none; touch-action: none; }
+.sheet .sh h2 { font: 700 20px/1.2 var(--font); margin: 0; letter-spacing: -.01em; flex: 1; text-align: center; }
+.sheet .sh button { min-width: 64px; height: 36px; color: var(--blue); font-size: 17px; }
+.sheet .sh button.done { font-weight: 600; text-align: right; }
+.sheet .sh button:first-child { text-align: left; }
+.sheet .sb { overflow-y: auto; padding: 4px 16px calc(env(safe-area-inset-bottom) + 20px); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.sheet .list, .sheet .card { background: var(--fill); box-shadow: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (prefers-reduced-motion: reduce) { .sheet { transition: opacity 200ms; transform: none; opacity: 0; } .sheet.on { opacity: 1; } .page { animation: none; } }
+
+.toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 10px); transform: translate(-50%, -140%); z-index: 60; padding: 12px 18px; border-radius: 22px; font-weight: 600; font-size: 15px; transition: transform 420ms var(--spring); background: var(--glass-strong); max-width: calc(100% - 32px); }
+.toast.on { transform: translate(-50%, 0); }
+
+/* Ring */
+.ring { position: relative; width: 112px; height: 112px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+.ring .bg { stroke: var(--fill-2); }
+.ring .fg { stroke: var(--green); transition: stroke-dashoffset 700ms var(--spring); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.ring .lbl b { font: 800 30px/1 var(--round); display: block; }
+.ring .lbl span { font-size: 12px; color: var(--fg2); }
+
+/* Results */
+.res { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font: 800 14px/1 var(--round); color: #fff; flex: none; }
+.res.W { background: var(--green); } .res.L { background: var(--red); } .res.D { background: var(--fg3); }
+.dots { display: flex; gap: 5px; flex-wrap: wrap; }
+.dots i { width: 14px; height: 14px; border-radius: 5px; background: var(--fill-2); }
+.dots i.W { background: var(--green); } .dots i.L { background: var(--red); } .dots i.D { background: var(--fg3); }
+.bar { height: 8px; border-radius: 4px; background: var(--fill-2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: var(--blue); }
+.pos { color: var(--green); } .neg { color: var(--red); }
+.tilt { background: linear-gradient(160deg, rgba(255,59,48,.22), rgba(255,149,0,.12)), var(--glass); }
+.badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; background: var(--fill); color: var(--fg2); }
+.badge.g { background: rgba(52,199,89,.16); color: var(--green); }
+.badge.o { background: rgba(255,149,0,.16); color: var(--orange); }
+.badge.r { background: rgba(255,59,48,.14); color: var(--red); }
+.badge.b { background: rgba(0,122,255,.14); color: var(--blue); }
+
+/* Pitch */
+.pitch { position: relative; aspect-ratio: 3/4; border-radius: 24px; overflow: hidden; margin-bottom: 12px;
+  background: repeating-linear-gradient(180deg, rgba(52,199,89,.18) 0 12.5%, rgba(52,199,89,.1) 12.5% 25%), var(--glass);
+  border: .5px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow); }
+.pitch .lines { position: absolute; inset: 14px; border: 1.5px solid rgba(255,255,255,.35); border-radius: 8px; }
+.pitch .lines::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1.5px solid rgba(255,255,255,.35); }
+.pitch .lines::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%,-50%); border: 1.5px solid rgba(255,255,255,.35); border-radius: 50%; }
+.pp { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; width: 70px; }
+.pp .ovr { width: 38px; height: 42px; font-size: 17px; }
+.pp span { font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70px; padding: 1px 6px; border-radius: 8px; background: var(--glass-strong); }
+
+/* Player sheet */
+.pcard { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.pcard .ovr { width: 72px; height: 80px; font-size: 34px; border-radius: 16px 16px 24px 24px; }
+.pcard .ovr small { font-size: 12px; bottom: 6px; }
+.pcard h3 { margin: 0; font: 700 24px/1.15 var(--font); letter-spacing: -.01em; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.stat .spread { font-size: 14px; margin-bottom: 4px; }
+.stat b { font: 700 15px/1 var(--round); }
+
+/* Chart */
+.chart { width: 100%; height: 120px; display: block; }
+.chart path.l { fill: none; stroke: var(--blue); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart path.a { fill: url(#cg); }
+.hbars .hb { display: grid; grid-template-columns: 92px 1fr 44px; align-items: center; gap: 10px; font-size: 14px; margin: 8px 0; }
+.hbars .hb span:last-child { text-align: right; color: var(--fg2); }
+
+.slot { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+.slot button { height: 58px; border-radius: 14px; background: var(--fill); font: 700 20px/1 var(--round); position: relative; }
+.slot button.fix { background: var(--blue); color: #fff; }
+.slot button.sel { outline: 2px solid var(--blue); outline-offset: 1px; }
+.slot button small { position: absolute; top: 4px; left: 0; right: 0; font-size: 9px; font-weight: 600; opacity: .7; }
+.result { text-align: center; padding: 6px 0 2px; }
+.result .big { font-size: 56px; }
+.ok { color: var(--green); } .no { color: var(--red); }
+.kbd { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.kbd button { height: 44px; border-radius: 12px; background: var(--fill); font: 600 18px/1 var(--round); }
+.dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
+.dl dt { color: var(--fg2); } .dl dd { margin: 0; text-align: right; font-weight: 500; }
+.help { font-size: 14px; color: var(--fg2); margin: 6px 4px 12px; line-height: 1.45; }
+.help ol { padding-left: 20px; margin: 6px 0; } .help li { margin: 3px 0; }
+.wedit { display: flex; align-items: center; gap: 6px; }
+.wedit button { width: 34px; height: 34px; border-radius: 10px; background: var(--fill); display: grid; place-items: center; }
+.wedit button svg { width: 16px; height: 16px; }
+.pause { font: 800 44px/1 var(--round); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+<div id="app">
+  <section class="page" id="p-home"></section>
+  <section class="page" id="p-club"></section>
+  <section class="page" id="p-match"></section>
+  <section class="page" id="p-coins"></section>
+  <section class="page" id="p-more"></section>
+</div>
+<nav class="tabbar" id="tabbar"></nav>
+<div id="sheets"></div>
+<div class="toast" id="toast" role="status"></div>
+<input type="file" id="filein" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+const VERSION = '1.0.0';
+const KEY = 'fut.v1';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = new Intl.NumberFormat('sv-SE');
+const fmt = n => nf.format(Math.round(n || 0));
+const kfmt = n => { n = Math.round(n || 0); const a = Math.abs(n); if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace('.', ',') + 'M'; if (a >= 1e4) return Math.round(n / 1e3) + 'k'; if (a >= 1e3) return (n / 1e3).toFixed(1).replace('.', ',') + 'k'; return String(n); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const today = () => new Date().toISOString().slice(0, 10);
+const dayStr = t => new Date(t).toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+const POS = ['GK', 'RB', 'RWB', 'CB', 'LB', 'LWB', 'CDM', 'CM', 'RM', 'LM', 'CAM', 'RW', 'LW', 'CF', 'ST'];
+const POSSET = new Set(POS);
+const GROUP = { GK: 'GK', RB: 'DEF', RWB: 'DEF', CB: 'DEF', LB: 'DEF', LWB: 'DEF', CDM: 'MID', CM: 'MID', RM: 'MID', LM: 'MID', CAM: 'MID', RW: 'ATT', LW: 'ATT', CF: 'ATT', ST: 'ATT' };
+const MODES = { champs: 'Champs', rivals: 'Rivals', sb: 'Squad Battles', friendly: 'Vänskap' };
+const REASONS = ['Spelade bra', 'Spelade dåligt', 'Motståndaren bättre', 'Otur', 'Lagg', 'De gav upp', 'Jag gav upp', 'Domaren'];
+const BUCKETS = ['0–15', '16–30', '31–45', '46–60', '61–75', '76–90', 'Förl.'];
+const DEFAULT_RANKS = [[15, 'Elite I'], [14, 'Elite II'], [13, 'Elite III'], [12, 'Elite IV'], [11, 'Elite V'], [10, 'Champions I'], [9, 'Champions II'], [8, 'Champions III'], [7, 'Champions IV'], [6, 'Champions V'], [5, 'Contender I'], [4, 'Contender II'], [3, 'Contender III'], [2, 'Contender IV'], [1, 'Contender V']];
+const FODDER = { 75: 300, 76: 300, 77: 350, 78: 400, 79: 450, 80: 550, 81: 650, 82: 700, 83: 750, 84: 900, 85: 2000, 86: 4000, 87: 6000, 88: 11000, 89: 15000, 90: 30000, 91: 50000, 92: 80000, 93: 120000 };
+const fodderVal = r => FODDER[r] ?? (r < 75 ? 200 : 150000);
+const WIDGETS = { tilt: 'Tilt-skydd', champs: 'Champs', today: 'Idag', coins: 'Coins', goals: 'Mål', club: 'Klubb', packs: 'Packs' };
+const TABS = { home: 'Hem', club: 'Klubb', match: 'Matcher', coins: 'Coins', more: 'Mer' };
+
+/* ---------- Icons ---------- */
+const I = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  club: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l2 4-2 3v11H6V10L4 7z"/><path d="M9 3a3 3 0 0 0 6 0"/></svg>',
+  match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
+  coins: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M15 11.5c3.3 0 6 1.3 6 3s-2.7 3-6 3-6-1.3-6-3"/><path d="M9 15v2.5c0 1.7 2.7 3 6 3s6-1.3 6-3v-3"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg>',
+  lock: '<svg class="lock" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13M6 12l6 6 6-6"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V7M6 12l6-6 6 6"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
+  flame: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5S9 11 11 11c0-4 1-9 1-9z"/></svg>'
+};
+
+/* ---------- State ---------- */
+function fresh() {
+  return {
+    v: 1,
+    club: { name: '', synced: '', players: [] },
+    squad: null,
+    locks: {}, notes: {},
+    matches: [], runs: [{ id: uid(), start: Date.now() }],
+    trades: [], balance: [], packs: [], goals: [],
+    pauseUntil: 0,
+    settings: { theme: 'auto', tilt: 3, pauseMin: 15, champsGames: 15, ranks: DEFAULT_RANKS, protectXI: true, widgets: ['tilt', 'champs', 'today', 'coins', 'goals', 'club', 'packs'], hidden: [], tabs: [], formation: '' }
+  };
+}
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch { S = fresh(); }
+S.settings = Object.assign(fresh().settings, S.settings || {});
+for (const w of Object.keys(WIDGETS)) if (!S.settings.widgets.includes(w)) S.settings.widgets.push(w);
+if (!S.runs?.length) S.runs = [{ id: uid(), start: Date.now() }];
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Kunde inte spara: minnet är fullt'); } }
+
+/* ---------- Theme ---------- */
+const mq = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() {
+  const t = S.settings.theme === 'auto' ? (mq.matches ? 'dark' : 'light') : S.settings.theme;
+  document.documentElement.dataset.theme = t;
+  $('meta[name="theme-color"]').content = t === 'dark' ? '#050508' : '#eef0f6';
+}
+mq.addEventListener?.('change', applyTheme);
+applyTheme();
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
+
+/* ---------- Sheets (drag to dismiss with velocity) ---------- */
+const sheetStack = [];
+function openSheet({ title, body, done, cancel = 'Stäng', onDone, mount, onClose }) {
+  const scrim = document.createElement('div'); scrim.className = 'scrim';
+  const el = document.createElement('div'); el.className = 'sheet'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+  el.innerHTML = `<div class="grab"></div><div class="sh"><button data-x>${esc(cancel)}</button><h2>${esc(title)}</h2>${done ? `<button class="done" data-ok>${esc(done)}</button>` : '<button aria-hidden="true" tabindex="-1"></button>'}</div><div class="sb">${body}</div>`;
+  $('#sheets').append(scrim, el);
+  const h = { el, scrim, close, onClose };
+  sheetStack.push(h);
+  requestAnimationFrame(() => requestAnimationFrame(() => { scrim.classList.add('on'); el.classList.add('on'); }));
+  function close() {
+    if (h.closed) return; h.closed = true;
+    el.style.transition = ''; el.style.transform = '';
+    el.classList.remove('on'); scrim.classList.remove('on');
+    const i = sheetStack.indexOf(h); if (i >= 0) sheetStack.splice(i, 1);
+    setTimeout(() => { el.remove(); scrim.remove(); }, 450);
+    onClose?.();
+  }
+  scrim.onclick = close;
+  el.querySelector('[data-x]').onclick = close;
+  const ok = el.querySelector('[data-ok]');
+  if (ok) ok.onclick = () => { if (onDone?.(el) !== false) close(); };
+  // drag to dismiss
+  let y0 = 0, dy = 0, hist = [], drag = false;
+  const zones = [el.querySelector('.grab'), el.querySelector('.sh')];
+  zones.forEach(z => z.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    drag = true; y0 = e.clientY; dy = 0; hist = [[e.timeStamp, 0]]; z.setPointerCapture(e.pointerId); el.style.transition = 'none';
+  }));
+  zones.forEach(z => z.addEventListener('pointermove', e => {
+    if (!drag) return; dy = e.clientY - y0;
+    const v = dy < 0 ? -(Math.abs(dy) * 30) / (30 + Math.abs(dy)) : dy; // rubber band upward
+    el.style.transform = `translateY(${v}px)`; hist.push([e.timeStamp, dy]); if (hist.length > 6) hist.shift();
+  }));
+  const end = () => {
+    if (!drag) return; drag = false;
+    const [t1, d1] = hist[0], [t2, d2] = hist[hist.length - 1];
+    const vel = t2 > t1 ? (d2 - d1) / (t2 - t1) * 1000 : 0;
+    const projected = dy + (vel / 1000) * 0.998 / (1 - 0.998);
+    el.style.transition = '';
+    if (projected > el.offsetHeight * 0.45 || vel > 900) close(); else el.style.transform = '';
+  };
+  zones.forEach(z => { z.addEventListener('pointerup', end); z.addEventListener('pointercancel', end); });
+  mount?.(el, h);
+  return h;
+}
+function confirmSheet(title, text, label, fn, danger = true) {
+  openSheet({ title, body: `<p class="help" style="font-size:16px;color:var(--fg)">${esc(text)}</p><button class="btn full ${danger ? 'red' : 'pri'} press" data-c>${esc(label)}</button>`, mount: (el, h) => { el.querySelector('[data-c]').onclick = () => { fn(); h.close(); }; } });
+}
+
+/* ---------- Navigation ---------- */
+let tab = 'home';
+const sub = { club: 'players', match: 'champs', coins: 'trade' };
+const filt = { q: '', f: 'all', sort: 'ovr' };
+function visibleTabs() { return Object.keys(TABS).filter(t => t === 'home' || t === 'more' || !S.settings.tabs.includes(t)); }
+function renderTabbar() {
+  $('#tabbar').innerHTML = visibleTabs().map(t => `<button class="press ${t === tab ? 'on' : ''}" data-tab="${t}" aria-label="${TABS[t]}">${I[t]}<span>${TABS[t]}</span></button>`).join('');
+}
+$('#tabbar').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; if (b.dataset.tab === tab) { scrollTo({ top: 0, behavior: 'smooth' }); return; } go(b.dataset.tab); });
+const scrolls = {};
+function go(t) {
+  scrolls[tab] = scrollY; tab = t;
+  $$('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t));
+  renderTabbar(); render(); scrollTo(0, scrolls[t] || 0);
+}
+function render() {
+  ({ home: rHome, club: rClub, match: rMatch, coins: rCoins, more: rMore })[tab]();
+}
+function top(title, sub, btns = '') { return `<div class="top"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div class="topbtns">${btns}</div></div>`; }
+function seg(name, cur, opts) { return `<div class="seg" data-seg="${name}">${Object.entries(opts).map(([k, v]) => `<button class="${k === cur ? 'on' : ''}" data-v="${k}">${v}</button>`).join('')}</div>`; }
+document.addEventListener('click', e => {
+  const s = e.target.closest('[data-seg] button'); if (!s) return;
+  const name = s.parentElement.dataset.seg; sub[name] = s.dataset.v; render();
+});
+
+/* ---------- Club helpers ---------- */
+const pid = p => p.id;
+function ensureIds(players) { const seen = {}; players.forEach(p => { if (!p.id) { const base = `${p.name}|${p.ovr}|${p.pos}`; seen[base] = (seen[base] || 0) + 1; p.id = base + '|' + seen[base]; } }); return players; }
+function players() { return S.club.players || []; }
+function xiNames() { return new Set((S.squad?.xi || []).map(x => x[1])); }
+function isLocked(p) { if (S.locks[p.id]) return true; if (S.settings.protectXI && S.squad) { const xi = S.squad.xi.map(x => x[1]); if (xi.includes(p.name)) { const best = players().filter(q => q.name === p.name).sort((a, b) => b.ovr - a.ovr)[0]; return best === p; } } return false; }
+function dupKeys() { const c = {}; players().forEach(p => { c[p.name] = (c[p.name] || 0) + 1; }); return c; }
+function ovrClass(r) { return r >= 88 ? 'hi' : r < 75 ? 'lo' : ''; }
+function ovrBadge(p, posLabel = p.pos) { return `<div class="ovr ${ovrClass(p.ovr)}">${p.ovr}<small>${esc(posLabel)}</small></div>`; }
+function playerValue(p) { return p.tradeable ? (p.price || fodderVal(p.ovr)) : 0; }
+
+/* ---------- Ratings ---------- */
+function squadRating(rs) {
+  const n = rs.length; if (!n) return { rating: 0, exact: 0 };
+  const sum = rs.reduce((a, b) => a + b, 0), avg = sum / n;
+  const excess = rs.reduce((a, r) => a + Math.max(0, r - avg), 0);
+  const total = Math.round(sum + excess);
+  return { rating: Math.floor(total / n), exact: total / n };
+}
+
+/* ---------- Champs ---------- */
+function curRun() { return S.runs[S.runs.length - 1]; }
+function runMatches(run = curRun()) { return S.matches.filter(m => m.mode === 'champs' && m.run === run.id); }
+function rankFor(w) { const r = S.settings.ranks.find(([n]) => w >= n); return r ? r[1] : 'Ingen rank än'; }
+function nextRank(w) { const rs = [...S.settings.ranks].sort((a, b) => a[0] - b[0]); return rs.find(([n]) => n > w); }
+function wld(ms) { const o = { W: 0, D: 0, L: 0 }; ms.forEach(m => o[m.res]++); return o; }
+function lossStreak() { const ms = [...S.matches].sort((a, b) => b.t - a.t); let n = 0; for (const m of ms) { if (m.res === 'L') n++; else break; } return n; }
+function todayMatches() { const d = today(); return S.matches.filter(m => new Date(m.t).toISOString().slice(0, 10) === d); }
+
+/* ---------- Trades ---------- */
+const afterTax = p => Math.floor(p * 0.95);
+const breakEven = b => Math.ceil(b / 0.95);
+function tradeProfit(t) { return t.sell ? (afterTax(t.sell) - t.buy) * (t.qty || 1) : 0; }
+function weekStart() { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
+
+/* ======================= HOME ======================= */
+function rHome() {
+  const w = S.settings.widgets.filter(x => !S.settings.hidden.includes(x));
+  const h = new Date().getHours();
+  const hello = h < 5 ? 'God natt' : h < 10 ? 'God morgon' : h < 17 ? 'Hej' : 'God kväll';
+  let html = top('Översikt', `${hello}${S.club.name ? ', ' + esc(S.club.name) : ''} · ${new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}`, `<button class="ibtn glass press" data-act="editHome" aria-label="Anpassa">${I.edit}</button>`);
+  html += `<div class="btnrow mb"><button class="btn pri press" data-act="newMatch">${I.plus}Match</button><button class="btn press glass" data-act="newTrade">${I.plus}Trade</button><button class="btn press glass" data-act="newPack">${I.plus}Pack</button></div>`;
+  for (const k of w) html += (HW[k]?.() || '');
+  if (!w.length) html += `<div class="card empty"><b>Allt är dolt</b>Tryck på pennan för att visa kort.</div>`;
+  $('#p-home').innerHTML = html;
+  tickPause();
+}
+const HW = {
+  tilt() {
+    const st = lossStreak(), lim = S.settings.tilt;
+    if (S.pauseUntil > Date.now()) return `<div class="card tilt"><h3>${I.flame}Paus pågår</h3><div class="spread"><div class="pause" id="pauseclock">--:--</div><button class="btn sm press" data-act="endPause">Avsluta paus</button></div><div class="muted small" style="margin-top:6px">Drick vatten, sträck på dig. Du spelar bättre efteråt.</div></div>`;
+    if (st >= lim) return `<div class="card tilt"><h3>${I.flame}Tilt-varning</h3><div class="mid" style="margin:4px 0 6px">${st} förluster i rad</div><div class="muted" style="margin-bottom:12px">Statistiken säger att nästa match oftast går sämre när man är tiltad. Ta en kort paus?</div><div class="btnrow"><button class="btn pri press" data-act="startPause">Paus ${S.settings.pauseMin} min</button><button class="btn press" data-act="ignoreTilt">Spela vidare</button></div></div>`;
+    return '';
+  },
+  champs() {
+    const ms = runMatches(), r = wld(ms), total = S.settings.champsGames, played = ms.length, left = Math.max(0, total - played);
+    const nr = nextRank(r.W), pct = Math.min(1, played / total);
+    const C = 2 * Math.PI * 50;
+    return `<button class="card press" style="display:block;width:100%;text-align:left" data-go="match"><h3>Champs</h3><div class="row" style="gap:16px;margin-top:6px">
+      <div class="ring"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" cx="60" cy="60" r="50" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - (played ? r.W / total : 0))}"/></svg><div class="lbl"><div><b>${r.W}</b><span>vinster</span></div></div></div>
+      <div class="main" style="flex:1;min-width:0"><div class="mid">${esc(rankFor(r.W))}</div>
+      <div class="muted small" style="margin:4px 0 8px">${r.W}–${r.L}${r.D ? '–' + r.D : ''} · ${left} matcher kvar</div>
+      ${nr && left ? `<span class="badge b">${nr[0] - r.W} vinst${nr[0] - r.W > 1 ? 'er' : ''} till ${esc(nr[1])}</span>` : played >= total ? '<span class="badge g">Omgången klar</span>' : ''}
+      <div class="dots" style="margin-top:10px">${Array.from({ length: total }, (_, i) => `<i class="${ms[i]?.res || ''}"></i>`).join('')}</div></div></div></button>`;
+  },
+  today() {
+    const ms = todayMatches(), r = wld(ms);
+    if (!ms.length) return '';
+    const gf = ms.reduce((a, m) => a + m.gf, 0), ga = ms.reduce((a, m) => a + m.ga, 0);
+    return `<div class="card"><h3>Idag</h3><div class="grid2" style="margin-top:8px"><div><div class="big num">${r.W}–${r.L}${r.D ? '–' + r.D : ''}</div><div class="muted small">${ms.length} matcher</div></div><div><div class="big num">${gf}:${ga}</div><div class="muted small">mål för / emot</div></div></div></div>`;
+  },
+  coins() {
+    const bal = S.balance[S.balance.length - 1];
+    const ws = weekStart(), week = S.trades.filter(t => t.sold && t.sold >= ws).reduce((a, t) => a + tradeProfit(t), 0);
+    const open = S.trades.filter(t => !t.sell);
+    if (!bal && !S.trades.length) return `<button class="card press" style="display:block;width:100%;text-align:left" data-go="coins"><h3>Coins</h3><div class="muted">Logga ditt saldo och dina trades så ser du vinsten över tid.</div></button>`;
+    return `<button class="card press" style="display:block;width:100%;text-align:left" data-go="coins"><h3>Coins</h3><div class="grid2" style="margin-top:6px"><div><div class="big num">${bal ? kfmt(bal.amount) : '–'}</div><div class="muted small">saldo</div></div><div><div class="big num ${week >= 0 ? 'pos' : 'neg'}">${week >= 0 ? '+' : ''}${kfmt(week)}</div><div class="muted small">vinst denna vecka</div></div></div>${open.length ? `<div class="muted small" style="margin-top:10px">${open.length} öppna investering${open.length > 1 ? 'ar' : ''}</div>` : ''}${S.balance.length > 1 ? sparkline(S.balance.map(b => b.amount)) : ''}</button>`;
+  },
+  goals() {
+    const gs = S.goals.filter(g => !g.done).sort((a, b) => (a.due || 9e15) - (b.due || 9e15)).slice(0, 3);
+    return `<div class="card"><div class="spread"><h3>Mål</h3><button class="link small" data-act="newGoal">Lägg till</button></div>${gs.length ? `<div style="margin-top:6px">${gs.map(goalRow).join('')}</div>` : '<div class="muted" style="margin-top:4px">Inga aktiva mål. Lägg till Champs-deadline, SBC:er eller Evos.</div>'}</div>`;
+  },
+  club() {
+    const ps = players();
+    if (!ps.length) return `<div class="card"><h3>Klubb</h3><div class="muted" style="margin-bottom:12px">Hämta din klubb från FUT.GG så kan appen räkna SBC:er med dina egna kort.</div><button class="btn pri full press" data-act="importClub">${I.paste}Importera klubb</button></div>`;
+    const tr = ps.filter(p => p.tradeable), val = tr.reduce((a, p) => a + playerValue(p), 0);
+    const top3 = [...ps].sort((a, b) => b.ovr - a.ovr).slice(0, 3);
+    return `<button class="card press" style="display:block;width:100%;text-align:left" data-go="club"><h3>Klubb</h3><div class="grid2" style="margin:6px 0 12px"><div><div class="big num">${ps.length}</div><div class="muted small">spelare</div></div><div><div class="big num">${kfmt(val)}</div><div class="muted small">säljvärde</div></div></div><div class="row">${top3.map(p => `<div class="row" style="gap:8px;flex:1;min-width:0">${ovrBadge(p)}<div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div></div>`).join('')}</div>${S.club.synced ? `<div class="faint small" style="margin-top:10px">Hämtad ${esc(S.club.synced)}</div>` : ''}</button>`;
+  },
+  packs() {
+    if (!S.packs.length) return '';
+    const n = S.packs.length, wo = S.packs.filter(p => p.walkout).length, best = Math.max(...S.packs.map(p => p.best || 0));
+    return `<button class="card press" style="display:block;width:100%;text-align:left" data-go="coins" data-sub="packs"><h3>Packs</h3><div class="grid2" style="margin-top:6px"><div><div class="big num">${n}</div><div class="muted small">öppnade</div></div><div><div class="big num">${wo}</div><div class="muted small">walkouts · bäst ${best || '–'}</div></div></div></button>`;
+  }
+};
+function sparkline(vals) {
+  if (vals.length < 2) return '';
+  const w = 300, h = 60, mn = Math.min(...vals), mx = Math.max(...vals), rg = mx - mn || 1;
+  const pts = vals.map((v, i) => [i / (vals.length - 1) * w, h - 4 - (v - mn) / rg * (h - 8)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  return `<svg class="chart" style="height:60px;margin-top:10px" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="cg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity=".28"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs><path class="a" d="${d} L${w} ${h} L0 ${h}Z"/><path class="l" d="${d}" vector-effect="non-scaling-stroke"/></svg>`;
+}
+let pauseTimer;
+function tickPause() {
+  clearInterval(pauseTimer);
+  const el = $('#pauseclock'); if (!el) return;
+  const f = () => { const ms = S.pauseUntil - Date.now(); if (ms <= 0) { S.pauseUntil = 0; save(); clearInterval(pauseTimer); toast('Pausen är slut. Lycka till!'); if (tab === 'home') rHome(); return; } const s = Math.ceil(ms / 1000); el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  f(); pauseTimer = setInterval(f, 1000);
+}
+
+/* ======================= CLUB ======================= */
+function rClub() {
+  const ps = players();
+  let html = top('Klubb', ps.length ? `${ps.length} spelare${S.club.synced ? ' · hämtad ' + esc(S.club.synced) : ''}` : '', `<button class="ibtn glass press" data-act="importClub" aria-label="Importera">${I.paste}</button>`);
+  if (!ps.length) {
+    $('#p-club').innerHTML = html + `<div class="card empty"><b>Ingen klubb än</b>Hämta dina spelare från FUT.GG. Det är säkert, inget loggar in på EA.<div style="margin-top:16px"><button class="btn pri press" data-act="importClub">${I.paste}Importera klubb</button></div></div>`;
+    return;
+  }
+  html += seg('club', sub.club, { players: 'Spelare', squad: 'Lag', locked: 'Låsta' });
+  if (sub.club === 'squad') html += squadView();
+  else if (sub.club === 'locked') {
+    const ls = ps.filter(isLocked);
+    html += `<p class="help">Låsta spelare används aldrig när SBC-räknaren väljer foder. ${S.settings.protectXI ? 'Din startelva är låst automatiskt.' : ''}</p>`;
+    html += ls.length ? `<div class="list">${ls.map(playerRow).join('')}</div>` : `<div class="card empty"><b>Inga låsta</b>Öppna en spelare och slå på Lås.</div>`;
+  } else {
+    html += `<label class="search">${I.search}<input type="search" id="q" placeholder="Sök spelare" value="${esc(filt.q)}" autocomplete="off"></label>`;
+    const F = { all: 'Alla', GK: 'Målvakter', DEF: 'Försvar', MID: 'Mittfält', ATT: 'Anfall', trade: 'Säljbara', untrade: 'Otradbara', dup: 'Dubbletter', evo: 'Evos' };
+    html += `<div class="chips">${Object.entries(F).map(([k, v]) => `<button class="chip press ${filt.f === k ? 'on' : ''}" data-f="${k}">${v}</button>`).join('')}</div>`;
+    html += `<div class="spread" style="margin:0 4px 8px"><span class="muted small" id="cnt"></span><select id="sort" class="link" style="border:0;background:none;font-size:15px;text-align:right"><option value="ovr">Betyg</option><option value="ggr">FUT.GG-betyg</option><option value="price">Pris</option><option value="name">Namn</option></select></div>`;
+    html += `<div class="list" id="plist"></div>`;
+  }
+  $('#p-club').innerHTML = html;
+  if (sub.club === 'players') {
+    $('#sort').value = filt.sort;
+    $('#q').oninput = e => { filt.q = e.target.value; fillPlayers(); };
+    $('#sort').onchange = e => { filt.sort = e.target.value; fillPlayers(); };
+    fillPlayers();
+  }
+}
+function filteredPlayers() {
+  const q = filt.q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const dk = dupKeys();
+  let ps = players().filter(p => {
+    if (q && !p.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q) && !String(p.ovr).startsWith(q) && p.pos.toLowerCase() !== q) return false;
+    switch (filt.f) {
+      case 'GK': case 'DEF': case 'MID': case 'ATT': return GROUP[p.pos] === filt.f;
+      case 'trade': return p.tradeable; case 'untrade': return !p.tradeable;
+      case 'dup': return dk[p.name] > 1; case 'evo': return !!p.evoLevel;
+    }
+    return true;
+  });
+  const s = filt.sort;
+  ps.sort((a, b) => s === 'name' ? a.name.localeCompare(b.name, 'sv') : s === 'price' ? (b.price || 0) - (a.price || 0) : s === 'ggr' ? (b.ggr || 0) - (a.ggr || 0) : b.ovr - a.ovr || (b.ggr || 0) - (a.ggr || 0));
+  return ps;
+}
+function fillPlayers() {
+  const ps = filteredPlayers();
+  $('#cnt').textContent = `${ps.length} spelare`;
+  $('#plist').innerHTML = ps.length ? ps.slice(0, 400).map(playerRow).join('') : '<div class="empty">Inga träffar</div>';
+}
+function playerRow(p) {
+  const st = p.stats || {}, gk = p.pos === 'GK';
+  const line = gk ? `DIV ${st.div ?? '–'} · REF ${st.ref ?? '–'} · POS ${st.pos ?? '–'}` : `PAC ${st.pac ?? '–'} · SHO ${st.sho ?? '–'} · PAS ${st.pas ?? '–'} · DRI ${st.dri ?? '–'}`;
+  return `<button class="li ind tap" data-pl="${esc(p.id)}">${ovrBadge(p)}<div class="main"><div class="t">${esc(p.name)} ${p.evoLevel ? '<span class="badge b">Evo ' + p.evoLevel + '</span>' : ''}</div><div class="s">${[p.pos, ...(p.alt || [])].slice(0, 4).join(' · ')} · ${line}</div></div><div class="r">${isLocked(p) ? I.lock : ''}${p.tradeable ? `<div class="num">${kfmt(p.price)}</div>` : '<div class="faint small">otradbar</div>'}</div></button>`;
+}
+function squadView() {
+  const sq = S.squad;
+  if (!sq) return `<div class="card empty"><b>Inget lag sparat</b>Laget följer med när du importerar från FUT.GG:s lagsida.</div>`;
+  const byName = n => players().filter(p => p.name === n).sort((a, b) => b.ovr - a.ovr)[0];
+  const ROW = { GK: 90, RB: 72, RWB: 66, CB: 76, LB: 72, LWB: 66, CDM: 60, CM: 46, RM: 42, LM: 42, CAM: 32, RW: 18, LW: 18, CF: 20, ST: 14 };
+  const SIDE = { RB: 2, RWB: 2, RM: 2, RW: 2, LB: 0, LWB: 0, LM: 0, LW: 0 };
+  const rows = {};
+  sq.xi.forEach(([pos, name], i) => { const y = ROW[pos] ?? 50; (rows[y] = rows[y] || []).push({ pos, name, i }); });
+  let dots = '';
+  for (const [y, arr] of Object.entries(rows)) {
+    arr.sort((a, b) => (SIDE[a.pos] ?? 1) - (SIDE[b.pos] ?? 1) || b.i - a.i);
+    arr.forEach((o, k) => { const x = (k + 1) / (arr.length + 1) * 100; const p = byName(o.name) || { ovr: '?', name: o.name, pos: o.pos, id: '' }; dots += `<button class="pp press" style="left:${x}%;top:${y}%" data-pl="${esc(p.id)}">${ovrBadge(p, o.pos)}<span>${esc(o.name)}</span></button>`; });
+  }
+  const r = squadRating(sq.xi.map(([, n]) => byName(n)?.ovr || 0));
+  let html = `<div class="card"><div class="spread"><div><div class="mid">${esc(sq.name || 'Mitt lag')}</div><div class="muted small">${esc(sq.formation)}${sq.chem ? ' · kemi ' + esc(sq.chem) : ''}${sq.manager ? ' · ' + esc(sq.manager) : ''}</div></div><div class="ovr hi" style="width:52px;height:58px;font-size:24px">${r.rating}<small>LAG</small></div></div></div>`;
+  html += `<div class="pitch"><div class="lines"></div>${dots}</div>`;
+  if (sq.bench?.length) html += `<h2 class="sec">Bänk</h2><div class="list">${sq.bench.map(n => byName(n)).filter(Boolean).map(playerRow).join('')}</div>`;
+  return html;
+}
+function playerSheet(id) {
+  const p = players().find(x => x.id === id); if (!p) return;
+  const st = p.stats || {}, gk = p.pos === 'GK';
+  const keys = gk ? [['div', 'Dykning'], ['han', 'Grepp'], ['kic', 'Utspark'], ['ref', 'Reflexer'], ['spd', 'Fart'], ['pos', 'Placering']] : [['pac', 'Fart'], ['sho', 'Skott'], ['pas', 'Passning'], ['dri', 'Dribbling'], ['def', 'Försvar'], ['phy', 'Fysik']];
+  const col = v => v >= 85 ? 'var(--green)' : v >= 70 ? 'var(--yellow)' : v >= 50 ? 'var(--orange)' : 'var(--red)';
+  const locked = !!S.locks[p.id], autoLocked = !locked && isLocked(p);
+  const dup = dupKeys()[p.name] > 1;
+  openSheet({
+    title: '', body: `<div class="pcard">${ovrBadge(p)}<div><h3>${esc(p.name)}</h3><div class="muted">${[p.pos, ...(p.alt || [])].join(' · ')}</div><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${p.tradeable ? `<span class="badge g">Säljbar · ${kfmt(p.price)}</span>` : '<span class="badge">Otradbar</span>'}${p.evoLevel ? `<span class="badge b">Evo nivå ${p.evoLevel}</span>` : ''}${dup ? '<span class="badge o">Dubblett</span>' : ''}</div></div></div>
+    ${Object.keys(st).length ? `<div class="card"><div class="stats">${keys.map(([k, l]) => st[k] != null ? `<div class="stat"><div class="spread"><span class="muted">${l}</span><b>${st[k]}</b></div><div class="bar"><i style="width:${st[k]}%;background:${col(st[k])}"></i></div></div>` : '').join('')}</div></div>` : ''}
+    <div class="card"><dl class="dl"><dt>Fot</dt><dd>${p.foot === 'L' ? 'Vänster' : 'Höger'}</dd><dt>Skills</dt><dd>${'★'.repeat(p.skills || 0)}</dd><dt>Svag fot</dt><dd>${'★'.repeat(p.weakFoot || 0)}</dd>${p.ggr ? `<dt>FUT.GG-betyg</dt><dd>${String(p.ggr).replace('.', ',')} som ${esc(p.bestPos || p.pos)}</dd>` : ''}<dt>Foder-värde</dt><dd>~${kfmt(p.tradeable ? p.price : fodderVal(p.ovr))}</dd></dl></div>
+    <div class="list"><div class="field"><label>Lås spelaren</label><div style="flex:1"></div><button class="switch ${locked ? 'on' : ''}" data-lock role="switch" aria-checked="${locked}"></button></div></div>
+    ${autoLocked ? '<p class="help">Låst automatiskt eftersom han är i din startelva.</p>' : '<p class="help">Låsta spelare föreslås aldrig som SBC-foder.</p>'}
+    <div class="list"><div class="field col"><label class="muted small">Anteckning</label><textarea data-note placeholder="T.ex. spara till Evo, sälj efter TOTW…">${esc(S.notes[p.id] || '')}</textarea></div></div>`,
+    mount(el) {
+      el.querySelector('[data-lock]').onclick = e => { const b = e.currentTarget; b.classList.toggle('on'); if (b.classList.contains('on')) S.locks[p.id] = 1; else delete S.locks[p.id]; save(); };
+      el.querySelector('[data-note]').oninput = e => { const v = e.target.value.trim(); if (v) S.notes[p.id] = v; else delete S.notes[p.id]; save(); };
+    },
+    onClose: () => { if (tab === 'club') render(); }
+  });
+}
+
+/* ---------- Import from FUT.GG ---------- */
+function parseFutgg(text) {
+  text = text.trim();
+  if (text.startsWith('{')) { const j = JSON.parse(text); return { players: ensureIds(j.players || j.club?.players || []), squad: j.squad || null, name: j.club?.name || j.club || '' }; }
+  const T = text.replace(/ /g, ' ').split(/\s+/).filter(Boolean);
+  const STATK = new Set(['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY', 'DIV', 'HAN', 'KIC', 'REF', 'SPD', 'POS']);
+  const HEAD = new Set(['Menu', 'Filters', 'Players', 'Squads', 'Tactics', 'Statistics', 'Previous', 'Next', 'Home', 'NEW', 'Collapse', 'BENCH', 'Share', 'Copy']);
+  const isNum = s => /^\d{1,2}$/.test(s);
+  const out = []; let start = 0, squad = null;
+  for (let i = 0; i < T.length - 1; i++) {
+    if (T[i] === 'Previous') break;
+    if (!(isNum(T[i]) && +T[i] >= 40 && POSSET.has(T[i + 1]))) continue;
+    let nameT = T.slice(start, i);
+    let cut = -1; nameT.forEach((t, k) => { if (HEAD.has(t) || /^[\d.,]+[KM]?$/.test(t) || t === '++' || POSSET.has(t)) cut = k; });
+    nameT = nameT.slice(cut + 1);
+    if (nameT.length > 4) nameT = nameT.slice(-3);
+    if (!nameT.length) continue;
+    const p = { name: nameT.join(' '), ovr: +T[i], pos: T[i + 1], alt: [], stats: {} };
+    let j = i + 2;
+    while (j + 1 < T.length && STATK.has(T[j]) && /^\d+$/.test(T[j + 1])) { p.stats[T[j].toLowerCase()] = +T[j + 1]; j += 2; }
+    while (j < T.length && POSSET.has(T[j])) { p.alt.push(T[j]); j++; }
+    if (T[j] === 'L' || T[j] === 'R') { p.foot = T[j]; p.skills = +T[j + 1] || 0; if (T[j + 2] === '★') { p.weakFoot = +T[j + 3] || 0; j += 4; } else j += 2; }
+    if (isNum(T[j]) && POSSET.has(T[j + 1])) { p.evoLevel = +T[j]; j++; }
+    if (POSSET.has(T[j]) && /^\d+\.\d$/.test(T[j + 1] || '')) { p.bestPos = T[j]; p.ggr = +T[j + 1]; j += 2; }
+    if (/^\d+(\.\d+)?[KM]?$/.test(T[j] || '') && !(isNum(T[j]) && POSSET.has(T[j + 2]))) { const s = T[j].toUpperCase(); p.price = Math.round(parseFloat(s) * (s.endsWith('M') ? 1e6 : s.endsWith('K') ? 1e3 : 1)); j++; }
+    if (T[j] === 'LEVEL' && isNum(T[j + 1])) { p.evoLevel = +T[j + 1]; j += 2; }
+    p.tradeable = !!p.price;
+    out.push(p); start = j; i = j - 1;
+  }
+  // squad page detection: "4-1-2-1-2 (2)" + "BENCH"
+  if (T.includes('BENCH') && out.length >= 11) {
+    const bi = text.split(/\s+/).indexOf('BENCH');
+    const fm = text.match(/\b(\d-\d-\d(?:-\d)?(?:-\d)?(?: \(\d\))?)\b/);
+    const xi = out.slice(0, 11).map(p => [p.pos, p.name]);
+    squad = { name: (text.match(/\n([A-ZÅÄÖ0-9]{2,})\nCreated by/) || [])[1] || 'Mitt lag', formation: fm ? fm[1] : '', xi, bench: out.slice(11).map(p => p.name) };
+  }
+  return { players: out, squad };
+}
+function importClub() {
+  let collected = [], squad = null;
+  openSheet({
+    title: 'Importera klubb', done: 'Spara', body: `
+    <div class="help"><b style="color:var(--fg)">Så gör du (säkert, ingen EA-inloggning):</b><ol>
+      <li>Öppna <b>fut.gg</b> → <b>GG Club</b> → <b>Players</b>.</li>
+      <li>Markera allt och kopiera (på iPhone: tryck länge → Markera alla → Kopiera. På dator: Ctrl+A, Ctrl+C).</li>
+      <li>Klistra in nedan och tryck <b>Lägg till</b>. Upprepa för varje sida (1, 2, 3…).</li>
+      <li>Vill du ha med laget? Gör samma sak på lagsidan (View Squad).</li></ol></div>
+    <textarea class="paste" id="pastebox" placeholder="Klistra in här…"></textarea>
+    <div class="btnrow" style="margin:10px 0 12px"><button class="btn press" id="pastebtn">${I.paste}Klistra in</button><button class="btn pri press" id="addbtn">Lägg till</button></div>
+    <div class="card" id="impstat"><div class="muted">Inga spelare inlagda än.</div></div>
+    <p class="help">Spara ersätter din nuvarande klubb. Låsta spelare och anteckningar behålls. Du kan också välja en backupfil under Mer → Backup.</p>`,
+    mount(el) {
+      const box = el.querySelector('#pastebox');
+      const upd = () => { el.querySelector('#impstat').innerHTML = collected.length || squad ? `<div class="mid">${collected.length} spelare</div><div class="muted small">${squad ? 'Lag: ' + esc(squad.formation) + ' · ' : ''}Klistra in nästa sida eller tryck Spara.</div>` : '<div class="muted">Inga spelare inlagda än.</div>'; };
+      el.querySelector('#pastebtn').onclick = async () => { try { box.value = await navigator.clipboard.readText(); toast('Inklistrat'); } catch { box.focus(); toast('Tryck länge i rutan och välj Klistra in'); } };
+      el.querySelector('#addbtn').onclick = () => {
+        let r; try { r = parseFutgg(box.value); } catch { toast('Kunde inte läsa texten'); return; }
+        if (r.squad) { squad = r.squad; }
+        const add = r.squad ? r.players.filter(p => !collected.some(c => c.name === p.name && c.ovr === p.ovr)) : r.players;
+        if (!r.players.length) { toast('Hittade inga spelare i texten'); return; }
+        if (!r.squad) collected.push(...add);
+        else collected.push(...add.filter(() => false));
+        box.value = ''; upd(); toast(r.squad ? 'Laget hittades' : `${add.length} spelare tillagda`);
+      };
+    },
+    onDone() {
+      if (!collected.length && !squad) { toast('Lägg till minst en sida först'); return false; }
+      if (collected.length) { S.club.players = ensureIds(collected); S.club.synced = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }); }
+      if (squad) S.squad = squad;
+      save(); toast('Klubben är sparad'); render();
+    }
+  });
+}
+
+/* ======================= SBC ======================= */
+function sbcSheet() {
+  let slots = Array(11).fill(null), target = S.settings.lastTarget || 84, sel = -1, pick = null;
+  const body = () => {
+    const filled = slots.filter(x => x != null), r = squadRating(filled.length === 11 ? slots : filled);
+    return `<div class="card"><div class="spread"><div><div class="muted small">Målbetyg</div></div><div class="stepper"><button class="press" data-t="-1">−</button><b class="num">${target}</b><button class="press" data-t="1">+</button></div></div></div>
+    <div class="card result">${filled.length ? `<div class="big num ${filled.length === 11 ? (r.rating >= target ? 'ok' : 'no') : ''}">${r.rating}</div><div class="muted small">${filled.length === 11 ? (r.rating >= target ? 'Klarar ' + target + '!' : `Saknas ${(target * 11 - Math.round(r.exact * 11)).toFixed(0)} poäng`) : `${filled.length} av 11 ifyllda`} · exakt ${r.exact.toFixed(2).replace('.', ',')}</div>` : '<div class="muted" style="padding:10px 0">Fyll i betyg nedan eller låt appen välja foder åt dig.</div>'}</div>
+    <h2 class="sec">Platser <button data-clear>Rensa</button></h2>
+    <div class="slot">${slots.map((v, i) => `<button class="press ${v != null && pick?.[i]?.fixed !== false && v != null && !pick?.[i] ? 'fix' : ''} ${sel === i ? 'sel' : ''}" data-s="${i}">${v != null && pick?.[i] ? `<small>${esc(pick[i].name.split(' ').pop().slice(0, 7))}</small>` : ''}${v ?? '+'}</button>`).join('')}</div>
+    ${sel >= 0 ? `<div class="card" style="margin-top:12px"><div class="muted small mb">Välj betyg för plats ${sel + 1}</div><div class="kbd">${[78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92].map(n => `<button class="press" data-k="${n}">${n}</button>`).join('')}<button class="press" data-k="x" style="grid-column:span 5;color:var(--red)">Töm platsen</button></div></div>` : ''}
+    <p class="help">Blå platser är dina egna val (t.ex. en spelare SBC:t kräver). Tryck på knappen så fyller appen resten med det billigaste fodret från din klubb – låsta spelare rörs inte.</p>
+    <button class="btn pri full press" data-fill ${players().length ? '' : 'disabled style="opacity:.5"'}>Fyll med mitt foder</button>
+    ${players().length ? '' : '<p class="help">Importera klubben först för att använda foder.</p>'}
+    <div id="pickres"></div>`;
+  };
+  openSheet({
+    title: 'SBC-räknare', body: body(), mount(el) {
+      const sb = el.querySelector('.sb');
+      const re = () => { const y = sb.scrollTop; sb.innerHTML = body(); sb.scrollTop = y; if (pick) showPick(); };
+      const showPick = () => {
+        const used = pick.filter(Boolean); if (!used.length) return;
+        const cost = used.reduce((a, p) => a + (p.tradeable ? p.price : 0), 0), unt = used.filter(p => !p.tradeable).length;
+        el.querySelector('#pickres').innerHTML = `<h2 class="sec">Förslag</h2><div class="card"><div class="grid2"><div><div class="mid num">${kfmt(cost)}</div><div class="muted small">säljvärde du offrar</div></div><div><div class="mid num">${unt}</div><div class="muted small">otradbara används</div></div></div></div><div class="list">${used.sort((a, b) => b.ovr - a.ovr).map(p => `<div class="li ind">${ovrBadge(p)}<div class="main"><div class="t">${esc(p.name)}</div><div class="s">${p.tradeable ? 'Säljbar · ' + kfmt(p.price) : 'Otradbar'}</div></div></div>`).join('')}</div><button class="btn full press" data-copy style="margin-top:4px">Kopiera listan</button>`;
+      };
+      sb.addEventListener('click', e => {
+        const t = e.target.closest('button'); if (!t) return;
+        if (t.dataset.t) { target = Math.max(60, Math.min(99, target + +t.dataset.t)); S.settings.lastTarget = target; save(); re(); }
+        else if (t.dataset.s != null) { sel = sel === +t.dataset.s ? -1 : +t.dataset.s; re(); }
+        else if (t.dataset.k) { if (t.dataset.k === 'x') slots[sel] = null; else slots[sel] = +t.dataset.k; if (pick) pick[sel] = null; sel = -1; re(); }
+        else if (t.hasAttribute('data-clear')) { slots = Array(11).fill(null); pick = null; sel = -1; re(); }
+        else if (t.hasAttribute('data-fill')) {
+          const fixedIdx = slots.map((v, i) => v != null && !pick?.[i] ? i : -1).filter(i => i >= 0);
+          const fixed = fixedIdx.map(i => slots[i]);
+          const res = solveSBC(target, fixed, 11 - fixed.length);
+          if (!res) { toast('Hittar ingen kombination med ditt foder'); return; }
+          pick = Array(11).fill(null); let k = 0;
+          slots = slots.map((v, i) => fixedIdx.includes(i) ? v : null);
+          for (let i = 0; i < 11; i++) if (!fixedIdx.includes(i)) { const p = res[k++]; slots[i] = p.ovr; pick[i] = p; }
+          sel = -1; re(); toast('Förslag klart');
+        } else if (t.hasAttribute('data-copy')) {
+          const txt = pick.filter(Boolean).map(p => `${p.ovr} ${p.name}`).join('\n');
+          navigator.clipboard?.writeText(txt).then(() => toast('Kopierat'), () => toast('Kunde inte kopiera'));
+        }
+      });
+    }
+  });
+}
+function solveSBC(target, fixed, open) {
+  if (open <= 0) return [];
+  const avail = players().filter(p => !isLocked(p));
+  const cost = p => p.tradeable ? (p.price || fodderVal(p.ovr)) : fodderVal(p.ovr) * 0.6;
+  const byR = {};
+  avail.forEach(p => (byR[p.ovr] = byR[p.ovr] || []).push(p));
+  Object.values(byR).forEach(a => a.sort((x, y) => cost(x) - cost(y)));
+  const levels = Object.keys(byR).map(Number).filter(r => r >= target - 6 && r <= target + 4).sort((a, b) => b - a);
+  if (!levels.length) return null;
+  const pre = {}; levels.forEach(r => { pre[r] = [0]; byR[r].forEach((p, i) => pre[r].push(pre[r][i] + cost(p))); });
+  let best = null, bestCost = Infinity;
+  const cnt = {};
+  const rec = (li, left, cur, acc) => {
+    if (acc >= bestCost) return;
+    if (left === 0) { const rs = [...fixed, ...cur]; if (squadRating(rs).rating >= target) { bestCost = acc; best = { ...cnt }; } return; }
+    if (li >= levels.length) return;
+    const r = levels[li], max = Math.min(left, byR[r].length);
+    // upper bound check: fill rest with this level (highest remaining)
+    const ub = [...fixed, ...cur, ...Array(left).fill(r)]; if (squadRating(ub).rating < target) return;
+    for (let n = max; n >= 0; n--) {
+      cnt[r] = n; for (let i = 0; i < n; i++) cur.push(r);
+      rec(li + 1, left - n, cur, acc + pre[r][n]);
+      for (let i = 0; i < n; i++) cur.pop();
+    }
+    delete cnt[r];
+  };
+  rec(0, open, [], 0);
+  if (!best) return null;
+  const out = []; for (const [r, n] of Object.entries(best)) out.push(...byR[r].slice(0, n));
+  return out;
+}
+
+/* ======================= MATCHES ======================= */
+function rMatch() {
+  let html = top('Matcher', '', `<button class="ibtn glass press" data-act="newMatch" aria-label="Ny match">${I.plus}</button>`);
+  html += seg('match', sub.match, { champs: 'Champs', all: 'Alla', stats: 'Statistik' });
+  if (sub.match === 'champs') {
+    html += HW.champs().replace('data-go="match"', '');
+    const ms = runMatches();
+    html += `<div class="btnrow mb"><button class="btn pri press" data-act="newMatch" data-mode="champs">${I.plus}Logga Champs-match</button></div>`;
+    html += `<h2 class="sec">Denna omgång <button data-act="newRun">Ny omgång</button></h2>`;
+    html += ms.length ? `<div class="list">${[...ms].reverse().map(matchRow).join('')}</div>` : `<div class="card empty"><b>Inga matcher än</b>Logga varje Champs-match så räknar appen rank och vinster kvar.</div>`;
+    const old = S.runs.slice(0, -1).reverse().map(r => ({ r, ms: runMatches(r) })).filter(o => o.ms.length);
+    if (old.length) html += `<h2 class="sec">Tidigare omgångar</h2><div class="list">${old.map(({ r, ms }) => { const x = wld(ms); return `<div class="li"><div class="main"><div class="t">${esc(rankFor(x.W))}</div><div class="s">${new Date(r.start).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} · ${ms.length} matcher</div></div><div class="r num">${x.W}–${x.L}</div></div>`; }).join('')}</div>`;
+    html += `<p class="help">Rankgränserna är från säsong 1 (FC 27). Ändra dem under Mer → Inställningar om EA ändrar dem.</p>`;
+  } else if (sub.match === 'all') {
+    const ms = [...S.matches].sort((a, b) => b.t - a.t);
+    if (!ms.length) html += `<div class="card empty"><b>Inga matcher</b>Tryck + för att logga en match.</div>`;
+    else { const days = {}; ms.forEach(m => (days[new Date(m.t).toISOString().slice(0, 10)] = days[new Date(m.t).toISOString().slice(0, 10)] || []).push(m)); for (const [d, arr] of Object.entries(days)) { const x = wld(arr); html += `<h2 class="sec">${dayStr(d)}<span class="num" style="text-transform:none">${x.W}–${x.L}${x.D ? '–' + x.D : ''}</span></h2><div class="list">${arr.map(matchRow).join('')}</div>`; } }
+  } else html += statsView();
+  $('#p-match').innerHTML = html;
+}
+function matchRow(m) {
+  return `<button class="li tap" data-m="${m.id}"><div class="res ${m.res}">${m.res === 'W' ? 'V' : m.res === 'L' ? 'F' : 'O'}</div><div class="main"><div class="t num">${m.gf} – ${m.ga}${m.pens ? ' <span class="badge">straffar</span>' : ''}</div><div class="s">${MODES[m.mode]}${m.reason ? ' · ' + esc(m.reason) : ''}${m.formation ? ' · ' + esc(m.formation) : ''}</div></div><div class="r small">${new Date(m.t).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</div>${I.chev}</button>`;
+}
+function matchSheet(existing, mode) {
+  const m = existing ? { ...existing } : { id: uid(), t: Date.now(), mode: mode || S.settings.lastMode || 'champs', gf: 0, ga: 0, reason: '', formation: S.settings.formation || S.squad?.formation || '', conceded: [], motm: '', poss: '', shots: '', shotsA: '', xg: '', xgA: '', note: '', pens: false, penWin: null };
+  const xi = (S.squad?.xi || []).map(x => x[1]);
+  openSheet({
+    title: existing ? 'Match' : 'Ny match', done: 'Spara', body: `
+    ${seg('_mode', m.mode, MODES).replace('data-seg="_mode"', 'data-mseg')}
+    <div class="card"><div class="score"><div class="side"><span>Du</span><div class="val num" data-v="gf">${m.gf}</div><div class="pm"><button class="press" data-g="gf:-1">−</button><button class="press" data-g="gf:1">+</button></div></div><div class="colon">:</div><div class="side"><span>Motståndare</span><div class="val num" data-v="ga">${m.ga}</div><div class="pm"><button class="press" data-g="ga:-1">−</button><button class="press" data-g="ga:1">+</button></div></div></div>
+      <div id="penrow" ${m.gf === m.ga ? '' : 'hidden'} style="margin-top:10px"><div class="spread"><span>Avgjordes på straffar</span><button class="switch ${m.pens ? 'on' : ''}" data-pens></button></div><div id="penwin" ${m.pens ? '' : 'hidden'} style="margin-top:10px">${seg('_pw', m.penWin === true ? 'y' : m.penWin === false ? 'n' : '', { y: 'Jag vann', n: 'Jag förlorade' }).replace('data-seg="_pw"', 'data-pw')}</div></div></div>
+    <h2 class="sec">Varför gick det så?</h2><div class="chipwrap mb">${REASONS.map(r => `<button class="chip press ${m.reason === r ? 'on' : ''}" data-r="${r}">${r}</button>`).join('')}</div>
+    <h2 class="sec">När släppte du in mål?</h2><div class="chipwrap mb">${BUCKETS.map(b => `<button class="chip press ${m.conceded.includes(b) ? 'on' : ''}" data-b="${b}">${b}</button>`).join('')}</div>
+    <h2 class="sec">Detaljer (valfritt)</h2>
+    <div class="list">
+      <div class="field"><label>Formation</label><input data-f="formation" value="${esc(m.formation)}" placeholder="4-1-2-1-2 (2)"></div>
+      <div class="field"><label>Matchens spelare</label><input data-f="motm" list="xi" value="${esc(m.motm)}" placeholder="Namn"></div>
+      <div class="field"><label>Bollinnehav %</label><input data-f="poss" inputmode="numeric" value="${esc(m.poss)}" placeholder="–"></div>
+      <div class="field"><label>Skott du / mot</label><input data-f="shots" inputmode="numeric" value="${esc(m.shots)}" placeholder="–" style="max-width:60px"><span class="faint">/</span><input data-f="shotsA" inputmode="numeric" value="${esc(m.shotsA)}" placeholder="–" style="max-width:60px"></div>
+      <div class="field"><label>xG du / mot</label><input data-f="xg" inputmode="decimal" value="${esc(m.xg)}" placeholder="–" style="max-width:60px"><span class="faint">/</span><input data-f="xgA" inputmode="decimal" value="${esc(m.xgA)}" placeholder="–" style="max-width:60px"></div>
+      <div class="field col"><label class="muted small">Anteckning</label><textarea data-f="note" placeholder="Motståndarens lag, vad som funkade…">${esc(m.note)}</textarea></div>
+    </div>
+    <datalist id="xi">${[...new Set([...xi, ...players().map(p => p.name)])].slice(0, 300).map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+    ${existing ? `<button class="btn full press" data-del style="color:var(--red);margin-top:6px">Radera matchen</button>` : ''}`,
+    mount(el, h) {
+      const sb = el.querySelector('.sb');
+      const setScore = () => { el.querySelector('[data-v="gf"]').textContent = m.gf; el.querySelector('[data-v="ga"]').textContent = m.ga; el.querySelector('#penrow').hidden = m.gf !== m.ga; };
+      sb.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.closest('[data-mseg]')) { m.mode = b.dataset.v; $$('button', b.parentElement).forEach(x => x.classList.toggle('on', x === b)); }
+        else if (b.closest('[data-pw]')) { m.penWin = b.dataset.v === 'y'; $$('button', b.parentElement).forEach(x => x.classList.toggle('on', x === b)); }
+        else if (b.dataset.g) { const [k, d] = b.dataset.g.split(':'); m[k] = Math.max(0, Math.min(20, m[k] + +d)); setScore(); }
+        else if (b.hasAttribute('data-pens')) { m.pens = !m.pens; b.classList.toggle('on', m.pens); el.querySelector('#penwin').hidden = !m.pens; }
+        else if (b.dataset.r) { m.reason = m.reason === b.dataset.r ? '' : b.dataset.r; $$('[data-r]', sb).forEach(x => x.classList.toggle('on', x.dataset.r === m.reason)); }
+        else if (b.dataset.b) { const i = m.conceded.indexOf(b.dataset.b); if (i >= 0) m.conceded.splice(i, 1); else m.conceded.push(b.dataset.b); b.classList.toggle('on'); }
+        else if (b.hasAttribute('data-del')) confirmSheet('Radera match?', 'Matchen tas bort från statistiken.', 'Radera', () => { S.matches = S.matches.filter(x => x.id !== m.id); save(); h.close(); render(); });
+      });
+      sb.addEventListener('input', e => { const f = e.target.dataset.f; if (f) m[f] = e.target.value.trim(); });
+    },
+    onDone() {
+      m.res = m.gf > m.ga ? 'W' : m.gf < m.ga ? 'L' : m.pens && m.penWin != null ? (m.penWin ? 'W' : 'L') : 'D';
+      if (m.mode === 'champs' && !m.run) m.run = curRun().id;
+      if (m.mode !== 'champs') delete m.run;
+      const i = S.matches.findIndex(x => x.id === m.id); if (i >= 0) S.matches[i] = m; else S.matches.push(m);
+      S.settings.lastMode = m.mode; if (m.formation) S.settings.formation = m.formation;
+      save(); render();
+      if (!existing) {
+        if (m.res === 'L') tiltSkip = false;
+        const st = lossStreak();
+        if (m.res === 'L' && st >= S.settings.tilt && !S.settings.hidden.includes('tilt')) setTimeout(() => tiltSheet(st), 500);
+        else toast(m.res === 'W' ? 'Vinst sparad 🎉' : m.res === 'L' ? 'Förlust sparad' : 'Oavgjort sparat');
+        const ms = runMatches(); if (m.mode === 'champs' && ms.length >= S.settings.champsGames) setTimeout(() => toast(`Omgången klar: ${rankFor(wld(ms).W)}`), 2400);
+      }
+    }
+  });
+}
+function tiltSheet(st) {
+  openSheet({ title: 'Tilt-skydd', body: `<div style="text-align:center;padding:10px 0 4px"><div style="font-size:56px">🧊</div><div class="mid" style="margin:8px 0">${st} förluster i rad</div><p class="muted" style="margin:0 8px 18px">Det är när man är tiltad som flest matcher försvinner. En kort paus brukar hjälpa mer än en till match.</p></div><button class="btn pri full press" data-p>Ta paus ${S.settings.pauseMin} min</button><button class="btn full press" data-x2 style="margin-top:10px">Spela vidare ändå</button>`, mount(el, h) { el.querySelector('[data-p]').onclick = () => { startPause(); h.close(); }; el.querySelector('[data-x2]').onclick = h.close; } });
+}
+function startPause() { S.pauseUntil = Date.now() + S.settings.pauseMin * 60000; save(); go('home'); toast('Paus startad'); }
+function statsView() {
+  const ms = S.matches;
+  if (ms.length < 1) return `<div class="card empty"><b>Ingen statistik än</b>Logga några matcher så dyker insikterna upp här.</div>`;
+  const r = wld(ms), pct = x => ms.length ? Math.round(x / ms.length * 100) : 0;
+  const gf = ms.reduce((a, m) => a + m.gf, 0), ga = ms.reduce((a, m) => a + m.ga, 0);
+  let html = `<div class="grid2 mb"><div class="card"><h3>Vinst</h3><div class="big num">${pct(r.W)}%</div><div class="muted small">${r.W}–${r.L}${r.D ? '–' + r.D : ''} på ${ms.length}</div></div><div class="card"><h3>Mål per match</h3><div class="big num">${(gf / ms.length).toFixed(1).replace('.', ',')}</div><div class="muted small">släpper in ${(ga / ms.length).toFixed(1).replace('.', ',')}</div></div></div>`;
+  const ins = insights(ms); if (ins.length) html += `<div class="card"><h3>Insikter</h3>${ins.map(t => `<p style="margin:8px 0 0">${t}</p>`).join('')}</div>`;
+  const group = (key, label, min = 1) => { const g = {}; ms.forEach(m => { const k = m[key]; if (!k) return; (g[k] = g[k] || []).push(m); }); const rows = Object.entries(g).filter(([, a]) => a.length >= min).sort((a, b) => b[1].length - a[1].length).slice(0, 8); if (!rows.length) return ''; return `<div class="card"><h3>${label}</h3><div class="hbars">${rows.map(([k, a]) => { const w = wld(a), p = Math.round(w.W / a.length * 100); return `<div class="hb"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(key === 'mode' ? MODES[k] : k)}</span><div class="bar"><i style="width:${p}%;background:${p >= 50 ? 'var(--green)' : 'var(--orange)'}"></i></div><span class="num">${p}% · ${a.length}</span></div>`; }).join('')}</div></div>`; };
+  html += group('mode', 'Vinst per läge') + group('formation', 'Vinst per formation');
+  const bc = {}; ms.forEach(m => (m.conceded || []).forEach(b => bc[b] = (bc[b] || 0) + 1)); const mx = Math.max(1, ...Object.values(bc));
+  if (Object.keys(bc).length) html += `<div class="card"><h3>När du släpper in mål</h3><div class="hbars">${BUCKETS.map(b => `<div class="hb"><span>${b}</span><div class="bar"><i style="width:${(bc[b] || 0) / mx * 100}%;background:var(--red)"></i></div><span class="num">${bc[b] || 0}</span></div>`).join('')}</div></div>`;
+  const rc = {}; ms.forEach(m => m.reason && (rc[m.reason] = (rc[m.reason] || 0) + 1));
+  if (Object.keys(rc).length) html += `<div class="card"><h3>Orsaker</h3><div class="hbars">${Object.entries(rc).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<div class="hb"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k)}</span><div class="bar"><i style="width:${n / ms.length * 100}%"></i></div><span class="num">${n}</span></div>`).join('')}</div></div>`;
+  const mc = {}; ms.forEach(m => m.motm && (mc[m.motm] = (mc[m.motm] || 0) + 1));
+  if (Object.keys(mc).length) html += `<div class="card"><h3>Matchens spelare</h3><dl class="dl" style="margin-top:8px">${Object.entries(mc).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, n]) => `<dt>${esc(k)}</dt><dd>${n}×</dd>`).join('')}</dl></div>`;
+  html += `<button class="btn full press glass" data-act="copyStats">Kopiera statistik till Claude</button><p class="help">Klistra in i chatten med Claude så får du en genomgång av ditt spel.</p>`;
+  return html;
+}
+function insights(ms) {
+  const out = [];
+  const bc = {}; let tot = 0; ms.forEach(m => (m.conceded || []).forEach(b => { bc[b] = (bc[b] || 0) + 1; tot++; }));
+  if (tot >= 5) { const [b, n] = Object.entries(bc).sort((a, b) => b[1] - a[1])[0]; if (n / tot >= .25) out.push(`Du släpper in flest mål i minut <b>${b}</b> (${Math.round(n / tot * 100)}% av alla). Byt in fräscha spelare eller spela säkrare där.`); }
+  const sorted = [...ms].sort((a, b) => a.t - b.t); let afterL = 0, afterLW = 0;
+  for (let i = 1; i < sorted.length; i++) if (sorted[i - 1].res === 'L' && sorted[i].t - sorted[i - 1].t < 3 * 3600e3) { afterL++; if (sorted[i].res === 'W') afterLW++; }
+  if (afterL >= 4) { const p = Math.round(afterLW / afterL * 100), all = Math.round(wld(ms).W / ms.length * 100); if (p < all - 8) out.push(`Efter en förlust vinner du bara <b>${p}%</b> (annars ${all}%). Pausen efter förluster lönar sig.`); }
+  const late = ms.filter(m => new Date(m.t).getHours() >= 23 || new Date(m.t).getHours() < 4);
+  if (late.length >= 4) { const p = Math.round(wld(late).W / late.length * 100), all = Math.round(wld(ms).W / ms.length * 100); if (p < all - 8) out.push(`Sent på natten vinner du <b>${p}%</b> mot ${all}% annars.`); }
+  const withShots = ms.filter(m => +m.shots && +m.shotsA); if (withShots.length >= 4) { const conv = withShots.reduce((a, m) => a + m.gf, 0) / withShots.reduce((a, m) => a + +m.shots, 0); out.push(`Du gör mål på <b>${Math.round(conv * 100)}%</b> av dina skott.`); }
+  return out;
+}
+
+/* ======================= COINS ======================= */
+function rCoins() {
+  let html = top('Coins', '', `<button class="ibtn glass press" data-act="${sub.coins === 'packs' ? 'newPack' : sub.coins === 'bal' ? 'newBal' : 'newTrade'}" aria-label="Lägg till">${I.plus}</button>`);
+  html += seg('coins', sub.coins, { trade: 'Trading', bal: 'Saldo', packs: 'Packs' });
+  if (sub.coins === 'trade') {
+    const sold = S.trades.filter(t => t.sell), open = S.trades.filter(t => !t.sell);
+    const tot = sold.reduce((a, t) => a + tradeProfit(t), 0), ws = weekStart(), week = sold.filter(t => t.sold >= ws).reduce((a, t) => a + tradeProfit(t), 0);
+    const winR = sold.length ? Math.round(sold.filter(t => tradeProfit(t) > 0).length / sold.length * 100) : 0;
+    html += `<div class="grid2 mb"><div class="card"><h3>Denna vecka</h3><div class="big num ${week >= 0 ? 'pos' : 'neg'}">${week >= 0 ? '+' : ''}${kfmt(week)}</div><div class="muted small">efter skatt</div></div><div class="card"><h3>Totalt</h3><div class="big num ${tot >= 0 ? 'pos' : 'neg'}">${tot >= 0 ? '+' : ''}${kfmt(tot)}</div><div class="muted small">${sold.length} affärer · ${winR}% plus</div></div></div>`;
+    html += taxCard();
+    html += `<h2 class="sec">Öppna investeringar</h2>` + (open.length ? `<div class="list">${open.map(tradeRow).join('')}</div>` : `<div class="card empty"><b>Inget köpt just nu</b>Logga köp så räknar appen ut lägsta säljpris för att gå plus.</div>`);
+    if (sold.length) html += `<h2 class="sec">Sålda</h2><div class="list">${[...sold].sort((a, b) => b.sold - a.sold).slice(0, 60).map(tradeRow).join('')}</div>`;
+  } else if (sub.coins === 'bal') {
+    const b = S.balance;
+    html += b.length ? `<div class="card"><h3>Saldo</h3><div class="big num">${fmt(b[b.length - 1].amount)}</div>${b.length > 1 ? (() => { const d = b[b.length - 1].amount - b[0].amount; return `<div class="small ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${fmt(d)} sedan ${new Date(b[0].t).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}</div>`; })() : ''}${sparkline(b.map(x => x.amount))}</div>` : `<div class="card empty"><b>Inget saldo loggat</b>Skriv in hur många coins du har då och då, så ser du utvecklingen.</div>`;
+    html += `<button class="btn pri full press mb" data-act="newBal">${I.plus}Logga saldo</button>`;
+    if (b.length) html += `<div class="list">${[...b].reverse().slice(0, 40).map((x, i, arr) => { const prev = arr[i + 1]; const d = prev ? x.amount - prev.amount : 0; return `<button class="li tap" data-bal="${x.t}"><div class="main"><div class="t num">${fmt(x.amount)}</div><div class="s">${new Date(x.t).toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' })}</div></div>${prev ? `<div class="r num ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${kfmt(d)}</div>` : ''}</button>`; }).join('')}</div>`;
+  } else {
+    const ps = S.packs;
+    if (ps.length) {
+      const wo = ps.filter(p => p.walkout).length, spent = ps.reduce((a, p) => a + (p.costType === 'coins' ? +p.cost || 0 : 0), 0), val = ps.reduce((a, p) => a + (+p.value || 0), 0);
+      const avg = (ps.reduce((a, p) => a + (+p.best || 0), 0) / ps.filter(p => p.best).length || 0);
+      html += `<div class="grid2 mb"><div class="card"><h3>Walkouts</h3><div class="big num">${wo}</div><div class="muted small">av ${ps.length} packs (${Math.round(wo / ps.length * 100)}%)</div></div><div class="card"><h3>Snitt bästa</h3><div class="big num">${avg ? avg.toFixed(1).replace('.', ',') : '–'}</div><div class="muted small">bästa spelaren per pack</div></div></div>`;
+      if (spent || val) html += `<div class="card"><h3>Coins in / ut</h3><dl class="dl" style="margin-top:8px"><dt>Spenderat (coins)</dt><dd class="num">${fmt(spent)}</dd><dt>Värde ur packs</dt><dd class="num">${fmt(val)}</dd><dt>Netto</dt><dd class="num ${val - spent >= 0 ? 'pos' : 'neg'}">${val - spent >= 0 ? '+' : ''}${fmt(val - spent)}</dd></dl></div>`;
+    }
+    html += `<button class="btn pri full press mb" data-act="newPack">${I.plus}Logga pack</button>`;
+    html += ps.length ? `<div class="list">${[...ps].reverse().map(p => `<button class="li tap" data-pack="${p.id}"><div class="ovr ${ovrClass(+p.best || 0)}">${p.best || '–'}<small>BÄST</small></div><div class="main"><div class="t">${esc(p.name || 'Pack')} ${p.walkout ? '<span class="badge o">Walkout</span>' : ''}</div><div class="s">${p.player ? esc(p.player) + ' · ' : ''}${p.costType === 'free' ? 'Gratis' : p.costType === 'points' ? (p.cost || '?') + ' FC Points' : kfmt(p.cost) + ' coins'} · ${new Date(p.t).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}</div></div>${I.chev}</button>`).join('')}</div>` : `<div class="card empty"><b>Inga packs loggade</b>Logga dina packs så ser du om du har tur eller otur över tid.</div>`;
+  }
+  $('#p-coins').innerHTML = html;
+  const ti = $('#taxin'); if (ti) ti.oninput = updTax;
+}
+function taxCard() { return `<div class="card"><h3>Skatteräknare</h3><div class="field" style="padding:0;min-height:44px"><label>Pris</label><input id="taxin" inputmode="numeric" placeholder="t.ex. 10000" style="font:600 20px var(--round)"></div><div id="taxout" class="dl muted small" style="margin-top:6px">Säljer du för X får du 95% efter EA-skatten.</div></div>`; }
+function updTax(e) { const v = +e.target.value.replace(/\D/g, ''); $('#taxout').innerHTML = v ? `<dt>Säljer du för ${fmt(v)} får du</dt><dd class="num">${fmt(afterTax(v))}</dd><dt>Köpt för ${fmt(v)}: sälj minst för</dt><dd class="num">${fmt(breakEven(v))}</dd><dt>Skatt</dt><dd class="num">${fmt(v - afterTax(v))}</dd>` : 'Säljer du för X får du 95% efter EA-skatten.'; }
+function tradeRow(t) {
+  const p = tradeProfit(t);
+  return `<button class="li tap" data-trade="${t.id}"><div class="main"><div class="t">${esc(t.name)}${(t.qty || 1) > 1 ? ' ×' + t.qty : ''}</div><div class="s">Köpt ${kfmt(t.buy)}${t.sell ? ' · såld ' + kfmt(t.sell) : ' · gå plus vid ' + kfmt(breakEven(t.buy))}${t.target && !t.sell ? ' · mål ' + kfmt(t.target) : ''}</div></div><div class="r num">${t.sell ? `<span class="${p >= 0 ? 'pos' : 'neg'}">${p >= 0 ? '+' : ''}${kfmt(p)}</span>` : '<span class="badge b">Öppen</span>'}</div>${I.chev}</button>`;
+}
+function tradeSheet(existing) {
+  const t = existing ? { ...existing } : { id: uid(), t: Date.now(), name: '', buy: '', sell: '', target: '', qty: 1 };
+  openSheet({
+    title: existing ? 'Trade' : 'Ny trade', done: 'Spara', body: `
+    <div class="list">
+      <div class="field"><label>Spelare / kort</label><input data-f="name" value="${esc(t.name)}" placeholder="Namn" list="allp"></div>
+      <div class="field"><label>Köppris</label><input data-f="buy" inputmode="numeric" value="${t.buy || ''}" placeholder="0"></div>
+      <div class="field"><label>Antal</label><input data-f="qty" inputmode="numeric" value="${t.qty || 1}"></div>
+      <div class="field"><label>Målpris</label><input data-f="target" inputmode="numeric" value="${t.target || ''}" placeholder="valfritt"></div>
+      <div class="field"><label>Sålt för</label><input data-f="sell" inputmode="numeric" value="${t.sell || ''}" placeholder="tomt = inte sålt"></div>
+    </div>
+    <div class="card" id="tcalc"></div>
+    <datalist id="allp">${[...new Set(players().map(p => p.name))].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+    ${existing ? '<button class="btn full press" data-del style="color:var(--red)">Radera</button>' : ''}`,
+    mount(el, h) {
+      const calc = () => { const b = +t.buy || 0, s = +t.sell || 0, q = +t.qty || 1; el.querySelector('#tcalc').innerHTML = b ? `<dl class="dl"><dt>Gå plus vid</dt><dd class="num">${fmt(breakEven(b))}</dd>${t.target ? `<dt>Vinst vid målpris</dt><dd class="num pos">+${fmt((afterTax(+t.target) - b) * q)}</dd>` : ''}${s ? `<dt>Vinst efter skatt</dt><dd class="num ${afterTax(s) - b >= 0 ? 'pos' : 'neg'}">${fmt((afterTax(s) - b) * q)}</dd>` : ''}</dl>` : '<div class="muted small">Skriv köppriset så räknar appen.</div>'; };
+      el.querySelector('.sb').addEventListener('input', e => { const f = e.target.dataset.f; if (!f) return; t[f] = f === 'name' ? e.target.value : e.target.value.replace(/\D/g, ''); calc(); });
+      el.querySelector('[data-del]')?.addEventListener('click', () => confirmSheet('Radera trade?', 'Den tas bort från din vinst.', 'Radera', () => { S.trades = S.trades.filter(x => x.id !== t.id); save(); h.close(); render(); }));
+      calc();
+    },
+    onDone() {
+      if (!t.name.trim() || !+t.buy) { toast('Fyll i namn och köppris'); return false; }
+      t.buy = +t.buy; t.sell = +t.sell || 0; t.target = +t.target || 0; t.qty = +t.qty || 1; t.name = t.name.trim();
+      if (t.sell && !t.sold) t.sold = Date.now(); if (!t.sell) delete t.sold;
+      const i = S.trades.findIndex(x => x.id === t.id); if (i >= 0) S.trades[i] = t; else S.trades.push(t);
+      save(); if (tab !== 'coins') { sub.coins = 'trade'; go('coins'); } else render(); toast('Sparat');
+    }
+  });
+}
+function balSheet(existing) {
+  const b = existing ? { ...existing } : { t: Date.now(), amount: '' };
+  openSheet({ title: 'Saldo', done: 'Spara', body: `<div class="list"><div class="field"><label>Coins</label><input id="bamt" inputmode="numeric" value="${b.amount || ''}" placeholder="0" style="font:700 22px var(--round)"></div></div>${existing ? '<button class="btn full press" data-del style="color:var(--red)">Radera</button>' : '<p class="help">Tips: logga efter varje session eller en gång per dag.</p>'}`,
+    mount(el, h) { setTimeout(() => el.querySelector('#bamt').focus(), 450); el.querySelector('[data-del]')?.addEventListener('click', () => { S.balance = S.balance.filter(x => x.t !== b.t); save(); h.close(); render(); }); },
+    onDone(el) { const v = +el.querySelector('#bamt').value.replace(/\D/g, ''); if (!v) { toast('Skriv ett belopp'); return false; } b.amount = v; const i = S.balance.findIndex(x => x.t === b.t); if (i >= 0) S.balance[i] = b; else S.balance.push(b); S.balance.sort((x, y) => x.t - y.t); save(); if (tab !== 'coins') { sub.coins = 'bal'; go('coins'); } else render(); } });
+}
+function packSheet(existing) {
+  const p = existing ? { ...existing } : { id: uid(), t: Date.now(), name: S.settings.lastPack || '', costType: 'coins', cost: '', best: '', player: '', walkout: false, value: '' };
+  openSheet({
+    title: existing ? 'Pack' : 'Nytt pack', done: 'Spara', body: `
+    <div class="list"><div class="field"><label>Pack</label><input data-f="name" value="${esc(p.name)}" placeholder="t.ex. 83+ x10"></div></div>
+    ${seg('_ct', p.costType, { coins: 'Coins', points: 'FC Points', free: 'Gratis' }).replace('data-seg="_ct"', 'data-ct')}
+    <div class="list">
+      <div class="field" id="costf" ${p.costType === 'free' ? 'hidden' : ''}><label>Kostnad</label><input data-f="cost" inputmode="numeric" value="${p.cost || ''}" placeholder="0"></div>
+      <div class="field"><label>Bästa betyg</label><input data-f="best" inputmode="numeric" value="${p.best || ''}" placeholder="t.ex. 87"></div>
+      <div class="field"><label>Bästa spelare</label><input data-f="player" value="${esc(p.player)}" placeholder="Namn"></div>
+      <div class="field"><label>Värde (coins)</label><input data-f="value" inputmode="numeric" value="${p.value || ''}" placeholder="vad allt är värt"></div>
+      <div class="field"><label>Walkout</label><div style="flex:1"></div><button class="switch ${p.walkout ? 'on' : ''}" data-wo></button></div>
+    </div>
+    ${existing ? '<button class="btn full press" data-del style="color:var(--red)">Radera</button>' : ''}`,
+    mount(el, h) {
+      const sb = el.querySelector('.sb');
+      sb.addEventListener('input', e => { const f = e.target.dataset.f; if (f) p[f] = ['name', 'player'].includes(f) ? e.target.value : e.target.value.replace(/\D/g, ''); });
+      sb.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.closest('[data-ct]')) { p.costType = b.dataset.v; $$('button', b.parentElement).forEach(x => x.classList.toggle('on', x === b)); el.querySelector('#costf').hidden = p.costType === 'free'; } else if (b.hasAttribute('data-wo')) { p.walkout = !p.walkout; b.classList.toggle('on', p.walkout); } else if (b.hasAttribute('data-del')) confirmSheet('Radera pack?', '', 'Radera', () => { S.packs = S.packs.filter(x => x.id !== p.id); save(); h.close(); render(); }); });
+    },
+    onDone() { p.name = (p.name || '').trim() || 'Pack'; S.settings.lastPack = p.name; const i = S.packs.findIndex(x => x.id === p.id); if (i >= 0) S.packs[i] = p; else S.packs.push(p); save(); if (tab !== 'coins') { sub.coins = 'packs'; go('coins'); } else render(); toast(p.walkout ? 'Walkout! 🔥' : 'Sparat'); }
+  });
+}
+
+/* ======================= GOALS ======================= */
+function goalRow(g) {
+  const left = g.due ? g.due - Date.now() : null;
+  const lt = left == null ? '' : left < 0 ? '<span class="badge r">Utgått</span>' : left < 864e5 ? `<span class="badge o">${Math.max(1, Math.round(left / 36e5))} h kvar</span>` : `<span class="badge">${Math.round(left / 864e5)} d kvar</span>`;
+  return `<div class="row" style="padding:8px 0"><button class="switch ${g.done ? 'on' : ''}" data-gdone="${g.id}" style="width:26px;height:26px;border-radius:13px" aria-label="Klar"></button><button class="main" style="flex:1;text-align:left;min-width:0" data-goal="${g.id}"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${g.done ? 'text-decoration:line-through;opacity:.5' : ''}">${esc(g.title)}</div></button>${lt}</div>`;
+}
+function goalsSheet() {
+  const body = () => { const act = S.goals.filter(g => !g.done).sort((a, b) => (a.due || 9e15) - (b.due || 9e15)), done = S.goals.filter(g => g.done); return `<div class="card">${act.length ? act.map(goalRow).join('') : '<div class="muted">Inga aktiva mål.</div>'}</div><button class="btn pri full press mb" data-new>${I.plus}Nytt mål</button>${done.length ? `<h2 class="sec">Klara <button data-clr>Rensa</button></h2><div class="card">${done.map(goalRow).join('')}</div>` : ''}`; };
+  openSheet({ title: 'Mål & påminnelser', body: body(), mount(el) { const sb = el.querySelector('.sb'); const re = () => sb.innerHTML = body(); sb.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.gdone) { const g = S.goals.find(x => x.id === b.dataset.gdone); g.done = !g.done; save(); setTimeout(re, 250); b.classList.toggle('on'); } else if (b.dataset.goal) goalSheet(S.goals.find(x => x.id === b.dataset.goal), re); else if (b.hasAttribute('data-new')) goalSheet(null, re); else if (b.hasAttribute('data-clr')) { S.goals = S.goals.filter(g => !g.done); save(); re(); } }); }, onClose: () => tab === 'home' && render() });
+}
+function goalSheet(existing, after) {
+  const g = existing ? { ...existing } : { id: uid(), title: '', due: 0, done: false };
+  const PRE = ['Champs-omgången stänger', 'SBC går ut', 'Evo klar', 'Sälj investering', 'Rivals-belöningar', 'Ny promo släpps'];
+  const dv = g.due ? new Date(g.due - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : '';
+  openSheet({ title: existing ? 'Mål' : 'Nytt mål', done: 'Spara', body: `<div class="chipwrap mb">${PRE.map(p => `<button class="chip press" data-pre="${p}">${p}</button>`).join('')}</div><div class="list"><div class="field"><label>Vad</label><input id="gt" value="${esc(g.title)}" placeholder="t.ex. Gör 86-SBC:t"></div><div class="field"><label>Deadline</label><input id="gd" type="datetime-local" value="${dv}"></div></div><button class="btn full press glass" data-ics>${I.cal}Lägg i iPhone-kalendern</button><p class="help">Kalendern ger dig en riktig påminnelse på telefonen, 1 timme innan.</p>${existing ? '<button class="btn full press" data-del style="color:var(--red)">Radera</button>' : ''}`,
+    mount(el, h) {
+      el.querySelector('.sb').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.pre) el.querySelector('#gt').value = b.dataset.pre; else if (b.hasAttribute('data-ics')) { const t = el.querySelector('#gt').value.trim(), d = el.querySelector('#gd').value; if (!t || !d) { toast('Fyll i vad och deadline först'); return; } downloadICS(t, new Date(d)); } else if (b.hasAttribute('data-del')) { S.goals = S.goals.filter(x => x.id !== g.id); save(); h.close(); after?.(); } });
+    },
+    onDone(el) { g.title = el.querySelector('#gt').value.trim(); if (!g.title) { toast('Skriv vad målet är'); return false; } const d = el.querySelector('#gd').value; g.due = d ? new Date(d).getTime() : 0; const i = S.goals.findIndex(x => x.id === g.id); if (i >= 0) S.goals[i] = g; else S.goals.push(g); save(); after?.(); if (tab === 'home') render(); toast('Sparat'); }
+  });
+}
+function downloadICS(title, date) {
+  const f = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const end = new Date(date.getTime() + 30 * 6e4);
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FUT//SV', 'BEGIN:VEVENT', 'UID:' + uid() + '@fut', 'DTSTAMP:' + f(new Date()), 'DTSTART:' + f(date), 'DTEND:' + f(end), 'SUMMARY:FUT: ' + title.replace(/[,;]/g, ' '), 'BEGIN:VALARM', 'TRIGGER:-PT60M', 'ACTION:DISPLAY', 'DESCRIPTION:' + title.replace(/[,;]/g, ' '), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fut-paminnelse.ics'; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+/* ======================= MORE ======================= */
+function rMore() {
+  const chev = I.chev;
+  let html = top('Mer', '');
+  html += `<h2 class="sec">Verktyg</h2><div class="list">
+    <button class="li tap" data-act="sbc"><div class="main"><div class="t">SBC-räknare</div><div class="s">Räkna lagbetyg och fyll med ditt billigaste foder</div></div>${chev}</button>
+    <button class="li tap" data-act="goals"><div class="main"><div class="t">Mål & påminnelser</div><div class="s">Deadlines med påminnelse i kalendern</div></div>${chev}</button>
+    <button class="li tap" data-act="tax"><div class="main"><div class="t">Skatteräknare</div><div class="s">5% EA-skatt, lägsta säljpris</div></div>${chev}</button>
+    <button class="li tap" data-act="copyClub"><div class="main"><div class="t">Kopiera klubben till Claude</div><div class="s">Fråga om SBC:er, lag och foder i chatten</div></div>${chev}</button>
+  </div>`;
+  html += `<h2 class="sec">Klubb</h2><div class="list">
+    <button class="li tap" data-act="importClub"><div class="main"><div class="t">Importera från FUT.GG</div><div class="s">${players().length ? players().length + ' spelare · hämtad ' + esc(S.club.synced || '–') : 'Ingen klubb än'}</div></div>${chev}</button>
+    <div class="field"><label>Lås startelvan automatiskt</label><div style="flex:1"></div><button class="switch ${S.settings.protectXI ? 'on' : ''}" data-set="protectXI"></button></div>
+  </div>`;
+  html += `<h2 class="sec">Utseende</h2>${seg('_theme', S.settings.theme, { auto: 'Auto', light: 'Ljust', dark: 'Mörkt' }).replace('data-seg="_theme"', 'data-theme-seg')}
+  <div class="list"><button class="li tap" data-act="editHome"><div class="main"><div class="t">Anpassa hemskärmen</div><div class="s">Visa, dölj och flytta kort</div></div>${chev}</button>
+  <button class="li tap" data-act="editTabs"><div class="main"><div class="t">Flikar</div><div class="s">Dölj flikar du inte använder</div></div>${chev}</button></div>`;
+  html += `<h2 class="sec">Matcher</h2><div class="list">
+    <div class="field"><label>Tilt-varning efter</label><div style="flex:1"></div><div class="stepper"><button class="press" data-step="tilt:-1">−</button><b class="num" style="font-size:20px;min-width:30px">${S.settings.tilt}</b><button class="press" data-step="tilt:1">+</button></div></div>
+    <div class="field"><label>Pauslängd (min)</label><div style="flex:1"></div><div class="stepper"><button class="press" data-step="pauseMin:-5">−</button><b class="num" style="font-size:20px;min-width:30px">${S.settings.pauseMin}</b><button class="press" data-step="pauseMin:5">+</button></div></div>
+    <div class="field"><label>Champs-matcher</label><div style="flex:1"></div><div class="stepper"><button class="press" data-step="champsGames:-1">−</button><b class="num" style="font-size:20px;min-width:30px">${S.settings.champsGames}</b><button class="press" data-step="champsGames:1">+</button></div></div>
+    <button class="li tap" data-act="editRanks"><div class="main"><div class="t">Champs-ranker</div><div class="s">Vinster som krävs per rank</div></div>${chev}</button>
+  </div>`;
+  html += `<h2 class="sec">Backup</h2><div class="list">
+    <button class="li tap" data-act="export"><div class="main"><div class="t">Spara backup</div><div class="s">All din data som en fil</div></div>${I.share}</button>
+    <button class="li tap" data-act="import"><div class="main"><div class="t">Läs in backup</div><div class="s">Återställ från en fil</div></div>${chev}</button>
+    <button class="li tap" data-act="reset"><div class="main"><div class="t" style="color:var(--red)">Radera all data</div></div></button>
+  </div>
+  <p class="help">All data sparas bara på den här telefonen. Delar du appen med en kompis får hen sin egen tomma app. Appen loggar aldrig in på EA och kan inte ge ban.</p>
+  <p class="help faint" style="text-align:center">FUT · version ${VERSION}</p>`;
+  $('#p-more').innerHTML = html;
+}
+function editHome() {
+  const body = () => `<p class="help">Slå av kort du inte vill se och flytta upp det viktigaste.</p><div class="list">${S.settings.widgets.map((w, i) => `<div class="field"><label>${WIDGETS[w]}</label><div style="flex:1"></div><div class="wedit"><button class="press" data-mv="${i}:-1" ${i ? '' : 'disabled style="opacity:.3"'}>${I.up}</button><button class="press" data-mv="${i}:1" ${i < S.settings.widgets.length - 1 ? '' : 'disabled style="opacity:.3"'}>${I.down}</button></div><button class="switch ${S.settings.hidden.includes(w) ? '' : 'on'}" data-hw="${w}"></button></div>`).join('')}</div>`;
+  openSheet({ title: 'Hemskärmen', done: 'Klar', body: body(), mount(el) { const sb = el.querySelector('.sb'); sb.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.hw) { const w = b.dataset.hw, h = S.settings.hidden; const i = h.indexOf(w); if (i >= 0) h.splice(i, 1); else h.push(w); b.classList.toggle('on'); save(); } else if (b.dataset.mv) { const [i, d] = b.dataset.mv.split(':').map(Number), W = S.settings.widgets; const j = i + d; if (j < 0 || j >= W.length) return; [W[i], W[j]] = [W[j], W[i]]; save(); sb.innerHTML = body(); } }); }, onClose: () => render() });
+}
+function editTabs() {
+  openSheet({ title: 'Flikar', done: 'Klar', body: `<p class="help">Hem och Mer visas alltid.</p><div class="list">${['club', 'match', 'coins'].map(t => `<div class="field"><label>${TABS[t]}</label><div style="flex:1"></div><button class="switch ${S.settings.tabs.includes(t) ? '' : 'on'}" data-tb="${t}"></button></div>`).join('')}</div>`, mount(el) { el.querySelector('.sb').addEventListener('click', e => { const b = e.target.closest('[data-tb]'); if (!b) return; const t = b.dataset.tb, a = S.settings.tabs, i = a.indexOf(t); if (i >= 0) a.splice(i, 1); else a.push(t); b.classList.toggle('on'); save(); renderTabbar(); }); } });
+}
+function editRanks() {
+  const txt = S.settings.ranks.map(([n, l]) => `${n} ${l}`).join('\n');
+  openSheet({ title: 'Champs-ranker', done: 'Spara', body: `<p class="help">En rad per rank: antal vinster, sedan namnet.</p><textarea class="paste" id="rk" style="min-height:320px;font-size:16px">${esc(txt)}</textarea><button class="btn full press" data-def style="margin-top:10px">Återställ FC 27-standard</button>`, mount(el) { el.querySelector('[data-def]').onclick = () => { el.querySelector('#rk').value = DEFAULT_RANKS.map(([n, l]) => `${n} ${l}`).join('\n'); }; }, onDone(el) { const rs = el.querySelector('#rk').value.split('\n').map(l => l.trim().match(/^(\d+)\s+(.+)$/)).filter(Boolean).map(m => [+m[1], m[2]]).sort((a, b) => b[0] - a[0]); if (!rs.length) { toast('Inga ranker hittades'); return false; } S.settings.ranks = rs; save(); render(); toast('Sparat'); } });
+}
+function taxSheet() { openSheet({ title: 'Skatteräknare', body: taxCard().replace('class="card"', 'class="card" style="margin-top:4px"'), mount(el) { el.querySelector('#taxin').oninput = updTax; setTimeout(() => el.querySelector('#taxin').focus(), 450); } }); }
+function clubText() {
+  const ps = [...players()].sort((a, b) => b.ovr - a.ovr);
+  let t = `Min FUT-klubb (FC 27, ${ps.length} spelare${S.club.synced ? ', hämtad ' + S.club.synced : ''}).\nFormat: betyg namn position [säljbar pris | otradbar] [LÅST]\n`;
+  if (S.squad) t += `Lag: ${S.squad.formation}: ${S.squad.xi.map(([p, n]) => p + ' ' + n).join(', ')}\n`;
+  t += ps.map(p => `${p.ovr} ${p.name} ${[p.pos, ...(p.alt || [])].join('/')} ${p.tradeable ? kfmt(p.price) : 'otradbar'}${isLocked(p) ? ' LÅST' : ''}`).join('\n');
+  return t;
+}
+async function copyText(t, ok) { try { await navigator.clipboard.writeText(t); toast(ok); } catch { openSheet({ title: 'Kopiera', body: `<p class="help">Tryck länge i rutan → Markera alla → Kopiera.</p><textarea class="paste" style="min-height:300px" readonly>${esc(t)}</textarea>` }); } }
+function exportData() {
+  const data = JSON.stringify({ app: 'fut', version: VERSION, exported: new Date().toISOString(), ...S });
+  const name = `fut-backup-${today()}.json`;
+  const file = new File([data], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) { navigator.share({ files: [file], title: 'FUT backup' }).catch(() => {}); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Backup sparad');
+}
+$('#filein').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (j.app === 'fut') { const { app, version, exported, ...rest } = j; confirmSheet('Läs in backup?', 'Det här ersätter allt du har i appen nu.', 'Läs in', () => { S = Object.assign(fresh(), rest); S.settings = Object.assign(fresh().settings, rest.settings || {}); ensureIds(S.club.players || []); save(); applyTheme(); renderTabbar(); render(); toast('Backup inläst'); }, false); }
+    else if (j.players) { const r = parseFutgg(JSON.stringify(j)); S.club.players = r.players; S.club.name = j.club || S.club.name; S.club.synced = j.synced || ''; if (r.squad) S.squad = r.squad; save(); render(); toast(`${r.players.length} spelare inlästa`); }
+    else toast('Filen känns inte igen');
+  } catch { toast('Kunde inte läsa filen'); }
+});
+
+/* ---------- Global actions ---------- */
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (a) {
+    const x = a.dataset.act;
+    const A = {
+      newMatch: () => matchSheet(null, a.dataset.mode), newTrade: () => tradeSheet(), newPack: () => packSheet(), newBal: () => balSheet(), newGoal: () => goalSheet(null),
+      importClub, sbc: sbcSheet, goals: goalsSheet, tax: taxSheet, editHome, editTabs, editRanks,
+      copyClub: () => players().length ? copyText(clubText(), 'Klubben kopierad – klistra in hos Claude') : toast('Importera klubben först'),
+      copyStats: () => copyText(statsText(), 'Statistiken kopierad'),
+      startPause, endPause: () => { S.pauseUntil = 0; save(); render(); }, ignoreTilt: () => { tiltSkip = true; render(); },
+      newRun: () => confirmSheet('Starta ny omgång?', 'Nuvarande Champs-omgång sparas under Tidigare omgångar.', 'Starta ny', () => { S.runs.push({ id: uid(), start: Date.now() }); save(); render(); }, false),
+      export: exportData, import: () => $('#filein').click(),
+      reset: () => confirmSheet('Radera allt?', 'All data i appen försvinner. Spara gärna en backup först.', 'Radera allt', () => { localStorage.removeItem(KEY); S = fresh(); save(); applyTheme(); renderTabbar(); render(); toast('Allt raderat'); })
+    };
+    A[x]?.(); return;
+  }
+  const g = e.target.closest('[data-go]'); if (g && !e.target.closest('[data-act]')) { if (g.dataset.sub) sub[g.dataset.go] = g.dataset.sub; go(g.dataset.go); return; }
+  const pl = e.target.closest('[data-pl]'); if (pl && pl.dataset.pl) { playerSheet(pl.dataset.pl); return; }
+  const f = e.target.closest('[data-f]'); if (f && f.classList.contains('chip')) { filt.f = f.dataset.f; $$('.chip[data-f]').forEach(c => c.classList.toggle('on', c === f)); fillPlayers(); return; }
+  const m = e.target.closest('[data-m]'); if (m) { matchSheet(S.matches.find(x => x.id === m.dataset.m)); return; }
+  const t = e.target.closest('[data-trade]'); if (t) { tradeSheet(S.trades.find(x => x.id === t.dataset.trade)); return; }
+  const b = e.target.closest('[data-bal]'); if (b) { balSheet(S.balance.find(x => String(x.t) === b.dataset.bal)); return; }
+  const pk = e.target.closest('[data-pack]'); if (pk) { packSheet(S.packs.find(x => x.id === pk.dataset.pack)); return; }
+  const gd = e.target.closest('#p-home [data-gdone]'); if (gd) { const go_ = S.goals.find(x => x.id === gd.dataset.gdone); go_.done = !go_.done; gd.classList.toggle('on'); save(); setTimeout(render, 300); return; }
+  const gl = e.target.closest('#p-home [data-goal]'); if (gl) { goalSheet(S.goals.find(x => x.id === gl.dataset.goal)); return; }
+  const st = e.target.closest('[data-set]'); if (st) { const k = st.dataset.set; S.settings[k] = !S.settings[k]; st.classList.toggle('on', S.settings[k]); save(); return; }
+  const sp = e.target.closest('[data-step]'); if (sp) { const [k, d] = sp.dataset.step.split(':'); const lim = { tilt: [2, 10], pauseMin: [5, 60], champsGames: [5, 40] }[k]; S.settings[k] = Math.max(lim[0], Math.min(lim[1], S.settings[k] + +d)); save(); render(); return; }
+  const th = e.target.closest('[data-theme-seg] button'); if (th) { S.settings.theme = th.dataset.v; save(); applyTheme(); render(); return; }
+});
+let tiltSkip = false;
+const _tilt = HW.tilt; HW.tilt = () => { if (tiltSkip && S.pauseUntil <= Date.now()) return ''; return _tilt(); };
+function statsText() {
+  const ms = [...S.matches].sort((a, b) => a.t - b.t);
+  return `Mina FUT-matcher (${ms.length} st). Format: datum läge resultat orsak formation insläppta-minuter skott xG\n` + ms.map(m => `${new Date(m.t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })} ${MODES[m.mode]} ${m.gf}-${m.ga}${m.pens ? ' (straffar)' : ''} ${m.reason || ''} ${m.formation || ''} ${(m.conceded || []).join(',')} ${m.shots ? 'skott ' + m.shots + '/' + (m.shotsA || '?') : ''} ${m.xg ? 'xG ' + m.xg + '/' + (m.xgA || '?') : ''} ${m.note || ''}`.replace(/\s+/g, ' ').trim()).join('\n');
+}
+
+/* ---------- Start ---------- */
+go('home');
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').then(r => { r.update(); document.addEventListener('visibilitychange', () => !document.hidden && r.update()); });
+  let reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || sheetStack.length) return; reloaded = true; location.reload(); });
+}
+</script>
+</body>
+</html>

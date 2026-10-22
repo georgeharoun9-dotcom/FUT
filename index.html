@@ -281,7 +281,7 @@ textarea.paste { width: 100%; min-height: 160px; border-radius: 16px; border: 0;
 
 <script>
 'use strict';
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const KEY = 'fut.v1';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -483,8 +483,8 @@ function rHome() {
 const HW = {
   tilt() {
     const st = lossStreak(), lim = S.settings.tilt;
-    if (S.pauseUntil > Date.now()) return `<div class="card tilt"><h3>${I.flame}Paus pågår</h3><div class="spread"><div class="pause" id="pauseclock">--:--</div><button class="btn sm press" data-act="endPause">Avsluta paus</button></div><div class="muted small" style="margin-top:6px">Drick vatten, sträck på dig. Du spelar bättre efteråt.</div></div>`;
-    if (st >= lim) return `<div class="card tilt"><h3>${I.flame}Tilt-varning</h3><div class="mid" style="margin:4px 0 6px">${st} förluster i rad</div><div class="muted" style="margin-bottom:12px">Statistiken säger att nästa match oftast går sämre när man är tiltad. Ta en kort paus?</div><div class="btnrow"><button class="btn pri press" data-act="startPause">Paus ${S.settings.pauseMin} min</button><button class="btn press" data-act="ignoreTilt">Spela vidare</button></div></div>`;
+    if (S.pauseUntil > Date.now()) return `<div class="card tilt"><h3>${I.flame}Paus pågår</h3><div class="spread"><div class="pause" id="pauseclock">--:--</div><button class="btn sm press" data-act="endPause">Avsluta paus</button></div><div class="muted small" style="margin-top:6px">Drick vatten och sträck på dig.</div></div>`;
+    if (st >= lim) return `<div class="card tilt"><h3>${I.flame}Tilt-varning</h3><div class="mid" style="margin:4px 0 6px">${st} förluster i rad</div><div class="muted" style="margin-bottom:12px">När man är tiltad går det ofta sämre. Ta en kort paus?</div><div class="btnrow"><button class="btn pri press" data-act="startPause">Paus ${S.settings.pauseMin} min</button><button class="btn press" data-act="ignoreTilt">Spela vidare</button></div></div>`;
     return '';
   },
   champs() {
@@ -820,7 +820,7 @@ function matchSheet(existing, mode) {
   const xi = (S.squad?.xi || []).map(x => x[1]);
   openSheet({
     title: existing ? 'Match' : 'Ny match', done: 'Spara', body: `
-    ${seg('_mode', m.mode, MODES).replace('data-seg="_mode"', 'data-mseg')}
+    ${seg('_mode', m.mode, { champs: 'Champs', rivals: 'Rivals', sb: 'Battles', friendly: 'Vänskap' }).replace('data-seg="_mode"', 'data-mseg')}
     <div class="card"><div class="score"><div class="side"><span>Du</span><div class="val num" data-v="gf">${m.gf}</div><div class="pm"><button class="press" data-g="gf:-1">−</button><button class="press" data-g="gf:1">+</button></div></div><div class="colon">:</div><div class="side"><span>Motståndare</span><div class="val num" data-v="ga">${m.ga}</div><div class="pm"><button class="press" data-g="ga:-1">−</button><button class="press" data-g="ga:1">+</button></div></div></div>
       <div id="penrow" ${m.gf === m.ga ? '' : 'hidden'} style="margin-top:10px"><div class="spread"><span>Avgjordes på straffar</span><button class="switch ${m.pens ? 'on' : ''}" data-pens></button></div><div id="penwin" ${m.pens ? '' : 'hidden'} style="margin-top:10px">${seg('_pw', m.penWin === true ? 'y' : m.penWin === false ? 'n' : '', { y: 'Jag vann', n: 'Jag förlorade' }).replace('data-seg="_pw"', 'data-pw')}</div></div></div>
     <h2 class="sec">Varför gick det så?</h2><div class="chipwrap mb">${REASONS.map(r => `<button class="chip press ${m.reason === r ? 'on' : ''}" data-r="${r}">${r}</button>`).join('')}</div>
@@ -869,7 +869,7 @@ function matchSheet(existing, mode) {
   });
 }
 function tiltSheet(st) {
-  openSheet({ title: 'Tilt-skydd', body: `<div style="text-align:center;padding:10px 0 4px"><div style="font-size:56px">🧊</div><div class="mid" style="margin:8px 0">${st} förluster i rad</div><p class="muted" style="margin:0 8px 18px">Det är när man är tiltad som flest matcher försvinner. En kort paus brukar hjälpa mer än en till match.</p></div><button class="btn pri full press" data-p>Ta paus ${S.settings.pauseMin} min</button><button class="btn full press" data-x2 style="margin-top:10px">Spela vidare ändå</button>`, mount(el, h) { el.querySelector('[data-p]').onclick = () => { startPause(); h.close(); }; el.querySelector('[data-x2]').onclick = h.close; } });
+  openSheet({ title: 'Tilt-skydd', body: `<div style="text-align:center;padding:10px 0 4px"><div style="font-size:56px">🧊</div><div class="mid" style="margin:8px 0">${st} förluster i rad</div><p class="muted" style="margin:0 8px 18px">När man är tiltad är det lätt att fortsätta tappa matcher. En kort paus hjälper ofta mer än en match till.</p></div><button class="btn pri full press" data-p>Ta paus ${S.settings.pauseMin} min</button><button class="btn full press" data-x2 style="margin-top:10px">Spela vidare ändå</button>`, mount(el, h) { el.querySelector('[data-p]').onclick = () => { startPause(); h.close(); }; el.querySelector('[data-x2]').onclick = h.close; } });
 }
 function startPause() { S.pauseUntil = Date.now() + S.settings.pauseMin * 60000; save(); go('home'); toast('Paus startad'); }
 function statsView() {

@@ -426,7 +426,7 @@ function go(t) {
 function render() {
   ({ home: rHome, club: rClub, match: rMatch, coins: rCoins, more: rMore })[tab]();
 }
-function top(title, sub, btns = '') { return `<div class="top"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div class="topbtns">${btns}</div></div>`; }
+function hdr(title, sub, btns = '') { return `<div class="top"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div class="topbtns">${btns}</div></div>`; }
 function seg(name, cur, opts) { return `<div class="seg" data-seg="${name}">${Object.entries(opts).map(([k, v]) => `<button class="${k === cur ? 'on' : ''}" data-v="${k}">${v}</button>`).join('')}</div>`; }
 document.addEventListener('click', e => {
   const s = e.target.closest('[data-seg] button'); if (!s) return;
@@ -473,7 +473,7 @@ function rHome() {
   const w = S.settings.widgets.filter(x => !S.settings.hidden.includes(x));
   const h = new Date().getHours();
   const hello = h < 5 ? 'God natt' : h < 10 ? 'God morgon' : h < 17 ? 'Hej' : 'God kväll';
-  let html = top('Översikt', `${hello}${S.club.name ? ', ' + esc(S.club.name) : ''} · ${new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}`, `<button class="ibtn glass press" data-act="editHome" aria-label="Anpassa">${I.edit}</button>`);
+  let html = hdr('Översikt', `${hello}${S.club.name ? ', ' + esc(S.club.name) : ''} · ${new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}`, `<button class="ibtn glass press" data-act="editHome" aria-label="Anpassa">${I.edit}</button>`);
   html += `<div class="btnrow mb"><button class="btn pri press" data-act="newMatch">${I.plus}Match</button><button class="btn press glass" data-act="newTrade">${I.plus}Trade</button><button class="btn press glass" data-act="newPack">${I.plus}Pack</button></div>`;
   for (const k of w) html += (HW[k]?.() || '');
   if (!w.length) html += `<div class="card empty"><b>Allt är dolt</b>Tryck på pennan för att visa kort.</div>`;
@@ -546,7 +546,7 @@ function tickPause() {
 /* ======================= CLUB ======================= */
 function rClub() {
   const ps = players();
-  let html = top('Klubb', ps.length ? `${ps.length} spelare${S.club.synced ? ' · hämtad ' + esc(S.club.synced) : ''}` : '', `<button class="ibtn glass press" data-act="importClub" aria-label="Importera">${I.paste}</button>`);
+  let html = hdr('Klubb', ps.length ? `${ps.length} spelare${S.club.synced ? ' · hämtad ' + esc(S.club.synced) : ''}` : '', `<button class="ibtn glass press" data-act="importClub" aria-label="Importera">${I.paste}</button>`);
   if (!ps.length) {
     $('#p-club').innerHTML = html + `<div class="card empty"><b>Ingen klubb än</b>Hämta dina spelare från FUT.GG. Det är säkert, inget loggar in på EA.<div style="margin-top:16px"><button class="btn pri press" data-act="importClub">${I.paste}Importera klubb</button></div></div>`;
     return;
@@ -794,7 +794,7 @@ function solveSBC(target, fixed, open) {
 
 /* ======================= MATCHES ======================= */
 function rMatch() {
-  let html = top('Matcher', '', `<button class="ibtn glass press" data-act="newMatch" aria-label="Ny match">${I.plus}</button>`);
+  let html = hdr('Matcher', '', `<button class="ibtn glass press" data-act="newMatch" aria-label="Ny match">${I.plus}</button>`);
   html += seg('match', sub.match, { champs: 'Champs', all: 'Alla', stats: 'Statistik' });
   if (sub.match === 'champs') {
     html += HW.champs().replace('data-go="match"', '');
@@ -905,7 +905,7 @@ function insights(ms) {
 
 /* ======================= COINS ======================= */
 function rCoins() {
-  let html = top('Coins', '', `<button class="ibtn glass press" data-act="${sub.coins === 'packs' ? 'newPack' : sub.coins === 'bal' ? 'newBal' : 'newTrade'}" aria-label="Lägg till">${I.plus}</button>`);
+  let html = hdr('Coins', '', `<button class="ibtn glass press" data-act="${sub.coins === 'packs' ? 'newPack' : sub.coins === 'bal' ? 'newBal' : 'newTrade'}" aria-label="Lägg till">${I.plus}</button>`);
   html += seg('coins', sub.coins, { trade: 'Trading', bal: 'Saldo', packs: 'Packs' });
   if (sub.coins === 'trade') {
     const sold = S.trades.filter(t => t.sell), open = S.trades.filter(t => !t.sell);
@@ -1029,7 +1029,7 @@ function downloadICS(title, date) {
 /* ======================= MORE ======================= */
 function rMore() {
   const chev = I.chev;
-  let html = top('Mer', '');
+  let html = hdr('Mer', '');
   html += `<h2 class="sec">Verktyg</h2><div class="list">
     <button class="li tap" data-act="sbc"><div class="main"><div class="t">SBC-räknare</div><div class="s">Räkna lagbetyg och fyll med ditt billigaste foder</div></div>${chev}</button>
     <button class="li tap" data-act="goals"><div class="main"><div class="t">Mål & påminnelser</div><div class="s">Deadlines med påminnelse i kalendern</div></div>${chev}</button>

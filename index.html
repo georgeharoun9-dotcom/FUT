@@ -595,20 +595,20 @@ function fillPlayers() {
 }
 function playerRow(p) {
   const st = p.stats || {}, gk = p.pos === 'GK';
-  const line = gk ? `DIV ${st.div ?? '–'} · REF ${st.ref ?? '–'} · POS ${st.pos ?? '–'}` : `PAC ${st.pac ?? '–'} · SHO ${st.sho ?? '–'} · PAS ${st.pas ?? '–'} · DRI ${st.dri ?? '–'}`;
-  return `<button class="li ind tap" data-pl="${esc(p.id)}">${ovrBadge(p)}<div class="main"><div class="t">${esc(p.name)} ${p.evoLevel ? '<span class="badge b">Evo ' + p.evoLevel + '</span>' : ''}</div><div class="s">${[p.pos, ...(p.alt || [])].slice(0, 4).join(' · ')} · ${line}</div></div><div class="r">${isLocked(p) ? I.lock : ''}${p.tradeable ? `<div class="num">${kfmt(p.price)}</div>` : '<div class="faint small">otradbar</div>'}</div></button>`;
+  const line = !Object.keys(st).length ? '' : gk ? `DIV ${st.div ?? '–'} · REF ${st.ref ?? '–'} · POS ${st.pos ?? '–'}` : `PAC ${st.pac ?? '–'} · SHO ${st.sho ?? '–'} · PAS ${st.pas ?? '–'} · DRI ${st.dri ?? '–'}`;
+  return `<button class="li ind tap" data-pl="${esc(p.id)}">${ovrBadge(p)}<div class="main"><div class="t">${esc(p.name)} ${p.evoLevel ? '<span class="badge b">Evo ' + p.evoLevel + '</span>' : ''}</div><div class="s">${[p.pos, ...(p.alt || [])].slice(0, 4).join(' · ')}${line ? ' · ' + line : ''}</div></div><div class="r">${isLocked(p) ? I.lock : ''}${p.tradeable ? `<div class="num">${kfmt(p.price)}</div>` : '<div class="faint small">otradbar</div>'}</div></button>`;
 }
 function squadView() {
   const sq = S.squad;
   if (!sq) return `<div class="card empty"><b>Inget lag sparat</b>Laget följer med när du importerar från FUT.GG:s lagsida.</div>`;
   const byName = n => players().filter(p => p.name === n).sort((a, b) => b.ovr - a.ovr)[0];
-  const ROW = { GK: 90, RB: 72, RWB: 66, CB: 76, LB: 72, LWB: 66, CDM: 60, CM: 46, RM: 42, LM: 42, CAM: 32, RW: 18, LW: 18, CF: 20, ST: 14 };
+  const ROW = { GK: 89, RB: 72, RWB: 64, CB: 72, LB: 72, LWB: 64, CDM: 57, CM: 43, RM: 43, LM: 43, CAM: 29, RW: 14, LW: 14, CF: 14, ST: 14 };
   const SIDE = { RB: 2, RWB: 2, RM: 2, RW: 2, LB: 0, LWB: 0, LM: 0, LW: 0 };
   const rows = {};
   sq.xi.forEach(([pos, name], i) => { const y = ROW[pos] ?? 50; (rows[y] = rows[y] || []).push({ pos, name, i }); });
   let dots = '';
   for (const [y, arr] of Object.entries(rows)) {
-    arr.sort((a, b) => (SIDE[a.pos] ?? 1) - (SIDE[b.pos] ?? 1) || b.i - a.i);
+    arr.sort((a, b) => (SIDE[a.pos] ?? 1) - (SIDE[b.pos] ?? 1) || a.i - b.i);
     arr.forEach((o, k) => { const x = (k + 1) / (arr.length + 1) * 100; const p = byName(o.name) || { ovr: '?', name: o.name, pos: o.pos, id: '' }; dots += `<button class="pp press" style="left:${x}%;top:${y}%" data-pl="${esc(p.id)}">${ovrBadge(p, o.pos)}<span>${esc(o.name)}</span></button>`; });
   }
   const r = squadRating(sq.xi.map(([, n]) => byName(n)?.ovr || 0));
